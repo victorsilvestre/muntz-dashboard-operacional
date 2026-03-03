@@ -33,7 +33,7 @@
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="brand">
-                    <img src="../assets/logomarca/Logo-Muntz-Versão Principal-Ametista@2x.svg" alt="Muntz Logo"
+                    <img src="assets/logomarca/Logo-Muntz-Versão Principal-Ametista@2x.svg" alt="Muntz Logo"
                         class="brand-logo-full">
                 </div>
                 <button id="btn-toggle-sidebar" class="btn-icon" title="Recolher Menu">
@@ -43,8 +43,11 @@
 
             <nav class="sidebar-content">
                 <ul class="nav-menu">
-                    <li class="nav-item active">
+                    <li class="nav-item active" id="nav-visao-geral">
                         <a href="#"><i class="ri-dashboard-line"></i> <span class="nav-text">Visão Geral</span></a>
+                    </li>
+                    <li class="nav-item" id="nav-perfil">
+                        <a href="#"><i class="ri-user-settings-line"></i> <span class="nav-text">Perfil</span></a>
                     </li>
                     <li class="nav-item inactive">
                         <a href="#"><i class="ri-folder-chart-line"></i> <span class="nav-text">Projetos (Em
@@ -143,93 +146,235 @@
                 </div>
             </div>
 
-            <!-- KPIs -->
-            <div class="kpi-grid">
-                <div class="kpi-card glass-card kpi-primary">
-                    <div class="kpi-icon"><i class="ri-time-line"></i></div>
-                    <div class="kpi-data">
-                        <h3 id="kpi-horas">0h</h3>
-                        <p>Total de Horas</p>
+            <!-- PAGE: VISÃO GERAL -->
+            <div id="page-visao-geral" class="dashboard-page active">
+                <!-- KPIs -->
+                <div class="kpi-grid">
+                    <div class="kpi-card glass-card kpi-primary">
+                        <div class="kpi-icon"><i class="ri-time-line"></i></div>
+                        <div class="kpi-data">
+                            <h3 id="kpi-horas">0h</h3>
+                            <p>Total de Horas</p>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card glass-card">
+                        <div class="kpi-icon"><i class="ri-task-line"></i></div>
+                        <div class="kpi-data">
+                            <h3 id="kpi-tarefas">0</h3>
+                            <p>Demandas Únicas</p>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card glass-card kpi-warning">
+                        <div class="kpi-icon"><i class="ri-alarm-warning-line"></i></div>
+                        <div class="kpi-data">
+                            <h3 id="kpi-atraso">0%</h3>
+                            <p>Taxa de Atraso</p>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card glass-card kpi-accent">
+                        <div class="kpi-icon"><i class="ri-flashlight-line"></i></div>
+                        <div class="kpi-data">
+                            <h3 id="kpi-urgente">0%</h3>
+                            <p>Volume Urgente</p>
+                        </div>
                     </div>
                 </div>
 
-                <div class="kpi-card glass-card">
-                    <div class="kpi-icon"><i class="ri-task-line"></i></div>
-                    <div class="kpi-data">
-                        <h3 id="kpi-tarefas">0</h3>
-                        <p>Demandas Únicas</p>
+                <!-- Charts Matrix -->
+                <div class="charts-grid">
+                    <!-- Esforço por Cliente -->
+                    <div class="chart-card glass-card span-8">
+                        <div class="card-header">
+                            <h3><i class="ri-bar-chart-horizontal-line"></i> Horas consumidas por Cliente</h3>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="chart-clientes"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Refação x Criação (Demandas vs Ajustes) -->
+                    <div class="chart-card glass-card span-4">
+                        <div class="card-header">
+                            <h3><i class="ri-pie-chart-2-line"></i> Taxa de Refação (Tipo)</h3>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="chart-tipo"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Alocação Tática: Equipes e Horas -->
+                    <div class="chart-card glass-card span-6">
+                        <div class="card-header">
+                            <h3><i class="ri-group-line"></i> Carga Operacional por Equipe</h3>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="chart-equipes"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Esforço Tag -->
+                    <div class="chart-card glass-card span-6">
+                        <div class="card-header">
+                            <h3><i class="ri-price-tag-3-line"></i> Especialidades Densas (Tags)</h3>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="chart-tags"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Top Perfis Horas -->
+                    <div class="chart-card glass-card span-12">
+                        <div class="card-header">
+                            <h3><i class="ri-user-star-line"></i> Ranking de Horas Apontadas por Perfil</h3>
+                        </div>
+                        <div class="chart-body" style="height: 300px;">
+                            <canvas id="chart-perfis"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div> <!-- FIM PAGE: VISÃO GERAL -->
+
+            <!-- PAGE: PERFIL -->
+            <div id="page-perfil" class="dashboard-page hidden">
+                <!-- KPIs Perfil -->
+                <div class="kpi-grid kpi-perfil-grid">
+                    <div class="kpi-card glass-card kpi-primary">
+                        <div class="kpi-icon"><i class="ri-group-line"></i></div>
+                        <div class="kpi-data">
+                            <h3 id="kpi-total-perfis">0</h3>
+                            <p>Perfis Ativos</p>
+                        </div>
+                    </div>
+                    <div class="kpi-card glass-card">
+                        <div class="kpi-icon"><i class="ri-task-line"></i></div>
+                        <div class="kpi-data">
+                            <h3 id="kpi-total-tarefas-perfil">0</h3>
+                            <p>Total de Tarefas</p>
+                        </div>
+                    </div>
+                    <div class="kpi-card glass-card">
+                        <div class="kpi-icon"><i class="ri-list-check"></i></div>
+                        <div class="kpi-data">
+                            <h3 id="kpi-quantidade-itens-perfil">0</h3>
+                            <p>Qtd. de Itens</p>
+                        </div>
+                    </div>
+                    <div class="kpi-card glass-card">
+                        <div class="kpi-icon"><i class="ri-time-line"></i></div>
+                        <div class="kpi-data">
+                            <h3 id="kpi-total-horas-perfil">0h</h3>
+                            <p>Total de Horas</p>
+                        </div>
+                    </div>
+                    <div class="kpi-card glass-card">
+                        <div class="kpi-icon"><i class="ri-bar-chart-line"></i></div>
+                        <div class="kpi-data">
+                            <h3 id="kpi-media-tarefas">0</h3>
+                            <p>Média Taref./Perfil</p>
+                        </div>
+                    </div>
+                    <div class="kpi-card glass-card">
+                        <div class="kpi-icon"><i class="ri-stack-line"></i></div>
+                        <div class="kpi-data">
+                            <h3 id="kpi-media-itens">0</h3>
+                            <p>Média Qtd./Perfil</p>
+                        </div>
+                    </div>
+                    <div class="kpi-card glass-card">
+                        <div class="kpi-icon"><i class="ri-timer-line"></i></div>
+                        <div class="kpi-data">
+                            <h3 id="kpi-media-horas">0h</h3>
+                            <p>Média Hr./Perfil</p>
+                        </div>
+                    </div>
+                    <div class="kpi-card glass-card kpi-warning">
+                        <div class="kpi-icon"><i class="ri-alarm-warning-line"></i></div>
+                        <div class="kpi-data">
+                            <h3 id="kpi-media-atraso">0%</h3>
+                            <p>% Médio Atraso</p>
+                        </div>
                     </div>
                 </div>
 
-                <div class="kpi-card glass-card kpi-warning">
-                    <div class="kpi-icon"><i class="ri-alarm-warning-line"></i></div>
-                    <div class="kpi-data">
-                        <h3 id="kpi-atraso">0%</h3>
-                        <p>Taxa de Atraso</p>
+                <div class="charts-grid">
+                    <!-- Top Perfis Múltiplo -->
+                    <div class="chart-card glass-card span-12">
+                        <div class="card-header">
+                            <h3><i class="ri-bar-chart-2-line"></i> Ranking e Desempenho dos Perfis</h3>
+                        </div>
+                        <div class="chart-body" style="height: 380px;">
+                            <canvas id="chart-ranking-perfis"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Dispersão -->
+                    <div class="chart-card glass-card span-8">
+                        <div class="card-header">
+                            <h3><i class="ri-bubble-chart-line"></i> Distribuição de Carga da Agência (Tarefas vs Horas)
+                            </h3>
+                        </div>
+                        <div class="chart-body" style="height: 350px;">
+                            <canvas id="chart-dispersao-carga"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Complexidade -->
+                    <div class="chart-card glass-card span-4">
+                        <div class="card-header">
+                            <h3><i class="ri-pie-chart-2-line"></i> Distribuição por Complexidade</h3>
+                        </div>
+                        <div class="chart-body" style="height: 350px;">
+                            <canvas id="chart-complexidade"></canvas>
+                        </div>
                     </div>
                 </div>
 
-                <div class="kpi-card glass-card kpi-accent">
-                    <div class="kpi-icon"><i class="ri-flashlight-line"></i></div>
-                    <div class="kpi-data">
-                        <h3 id="kpi-urgente">0%</h3>
-                        <p>Volume Urgente</p>
-                    </div>
-                </div>
-            </div>
+                <!-- BLOCO ESPECÍFICO (DRILL-DOWN) -->
+                <div id="bloco-especifico" class="hidden">
+                    <div class="charts-grid"
+                        style="border-top: 1px solid rgba(0,0,0,0.05); padding-top: var(--spacing-6); margin-top: var(--spacing-4);">
+                        <div class="span-12" style="margin-bottom: var(--spacing-2);">
+                            <h2 class="perfil-destaque-title"><i class="ri-user-focus-line"></i>
+                                Análise Individual: <span id="perfil-name-destaque" class="perfil-destaque-name"></span>
+                            </h2>
+                        </div>
 
-            <!-- Charts Matrix -->
-            <div class="charts-grid">
-                <!-- Esforço por Cliente -->
-                <div class="chart-card glass-card span-8">
-                    <div class="card-header">
-                        <h3><i class="ri-bar-chart-horizontal-line"></i> Horas consumidas por Cliente</h3>
-                    </div>
-                    <div class="chart-body">
-                        <canvas id="chart-clientes"></canvas>
-                    </div>
-                </div>
+                        <div class="chart-card glass-card span-4">
+                            <div class="card-header">
+                                <h3><i class="ri-donut-chart-line"></i> Eficiência de Prazos</h3>
+                            </div>
+                            <div class="chart-body" style="height: 280px;">
+                                <canvas id="chart-perfil-prazos"></canvas>
+                            </div>
+                        </div>
 
-                <!-- Refação x Criação (Demandas vs Ajustes) -->
-                <div class="chart-card glass-card span-4">
-                    <div class="card-header">
-                        <h3><i class="ri-pie-chart-2-line"></i> Taxa de Refação (Tipo)</h3>
-                    </div>
-                    <div class="chart-body">
-                        <canvas id="chart-tipo"></canvas>
-                    </div>
-                </div>
-
-                <!-- Alocação Tática: Equipes e Horas -->
-                <div class="chart-card glass-card span-6">
-                    <div class="card-header">
-                        <h3><i class="ri-group-line"></i> Carga Operacional por Equipe</h3>
-                    </div>
-                    <div class="chart-body">
-                        <canvas id="chart-equipes"></canvas>
+                        <div class="chart-card glass-card span-8">
+                            <div class="card-header">
+                                <h3><i class="ri-building-line"></i> Time-Tracking por Cliente</h3>
+                            </div>
+                            <div class="chart-body" style="height: 280px;">
+                                <canvas id="chart-perfil-clientes"></canvas>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Esforço Tag -->
-                <div class="chart-card glass-card span-6">
-                    <div class="card-header">
-                        <h3><i class="ri-price-tag-3-line"></i> Especialidades Densas (Tags)</h3>
-                    </div>
-                    <div class="chart-body">
-                        <canvas id="chart-tags"></canvas>
+                <!-- BLOCO ESPECÍFICO VAZIO -->
+                <div id="bloco-especifico-vazio" class="charts-grid">
+                    <div class="span-12 glass-card" style="text-align: center; padding: 60px; color: #8A8E9A;">
+                        <i class="ri-user-search-line"
+                            style="font-size: 3rem; color: var(--color-montanha); margin-bottom: 16px; display: block;"></i>
+                        <h3 style="font-size: 1.1rem; color: var(--color-text-main);">Selecione um único Perfil nos
+                            filtros no
+                            topo da página para ativar a Análise Individual</h3>
                     </div>
                 </div>
 
-                <!-- Top Perfis Horas -->
-                <div class="chart-card glass-card span-12">
-                    <div class="card-header">
-                        <h3><i class="ri-user-star-line"></i> Ranking de Horas Apontadas por Perfil</h3>
-                    </div>
-                    <div class="chart-body" style="height: 300px;">
-                        <canvas id="chart-perfis"></canvas>
-                    </div>
-                </div>
-            </div>
+            </div> <!-- FIM PAGE: PERFIL -->
+
         </main>
     </div>
 

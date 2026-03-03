@@ -142,6 +142,16 @@ body {
     font-size: 1.25rem;
 }
 
+/* Títulos Bloco Específico */
+.perfil-destaque-title {
+    color: var(--color-ametista-dark);
+    font-size: 1.4rem;
+}
+
+.perfil-destaque-name {
+    color: var(--color-violeta-dark);
+}
+
 /* ===========================
    FILTERS TOOLBAR (In-Page)
    =========================== */
@@ -447,6 +457,32 @@ input:checked+.slider::before {
     margin: 0 var(--spacing-8) var(--spacing-6);
 }
 
+.kpi-perfil-grid {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+/* SPA Pages */
+.dashboard-page {
+    display: block;
+    animation: fadeInPage 0.3s ease-out;
+}
+
+.dashboard-page.hidden {
+    display: none !important;
+}
+
+@keyframes fadeInPage {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 .kpi-card {
     padding: var(--spacing-6);
     display: flex;
@@ -562,6 +598,10 @@ input:checked+.slider::before {
     .span-4 {
         grid-column: span 6;
     }
+
+    .kpi-perfil-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 @media (max-width: 900px) {
@@ -571,6 +611,10 @@ input:checked+.slider::before {
 
     .span-4 {
         grid-column: span 12;
+    }
+
+    .kpi-perfil-grid {
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 
@@ -673,7 +717,21 @@ input:checked+.slider::before {
 }
 
 [data-theme="dark"] .brand-logo-full {
-    content: url("../../assets/logomarca/Logo-Muntz-Branca-Transparente.svg");
+    content: url("../assets/logomarca/Logo-Muntz-Branca-Transparente.svg");
+}
+
+[data-theme="dark"] .nav-item:hover:not(.active) a {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--color-text-main);
+}
+
+[data-theme="dark"] .perfil-destaque-title {
+    color: var(--color-text-main);
+}
+
+[data-theme="dark"] .perfil-destaque-name {
+    color: #ce8eff;
+    /* Violeta mais claro para contraste */
 }
 
 [data-theme="dark"] .glass-card:hover {
