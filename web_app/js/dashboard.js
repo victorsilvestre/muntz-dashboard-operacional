@@ -60,7 +60,6 @@ const UI = {
         mediaAtraso: document.getElementById('kpi-media-atraso')
     },
     blocoEspecifico: document.getElementById('bloco-especifico'),
-    blocoEspecificoVazio: document.getElementById('bloco-especifico-vazio'),
     perfilNameDestaque: document.getElementById('perfil-name-destaque')
 };
 
@@ -479,14 +478,52 @@ function renderChartsParaPerfil(df) {
 
     // Deep Dive (Específico) logic
     if (STATE.filters.perfil !== 'all' && STATE.filters.perfil !== '') {
-        UI.blocoEspecificoVazio.classList.add('hidden');
         UI.blocoEspecifico.classList.remove('hidden');
         UI.perfilNameDestaque.innerText = STATE.filters.perfil;
         renderPerfilDrillDown(df);
     } else {
+        // Ocultar bloco e destruir gráficos específicos para evitar dados antigos
         UI.blocoEspecifico.classList.add('hidden');
-        UI.blocoEspecificoVazio.classList.remove('hidden');
+        destroySpecificCharts();
     }
+}
+
+// Função para destruir gráficos do bloco específico e limpar KPIs
+function destroySpecificCharts() {
+    // Destruir gráficos
+    const specificChartIds = [
+        'chart-perfil-prazos',
+        'chart-perfil-clientes',
+        'chart-tempomedio-tipo',
+        'chart-tempomedio-tag',
+        'chart-tempomedio-complexidade',
+        'chart-especializacao-tags',
+        'chart-especializacao-tipos',
+        'chart-evolucao-tempo'
+    ];
+
+    specificChartIds.forEach(chartId => {
+        if (STATE.charts[chartId]) {
+            STATE.charts[chartId].destroy();
+            delete STATE.charts[chartId];
+        }
+    });
+
+    // Limpar título do bloco
+    if (UI.perfilNameDestaque) {
+        UI.perfilNameDestaque.innerText = '';
+    }
+
+    // Limpar KPIs de Carga vs Capacidade
+    const elCargaHoras = document.getElementById('kpi-carga-horas');
+    const elCargaOcup = document.getElementById('kpi-carga-ocupacao');
+    const elCargaDif = document.getElementById('kpi-carga-diferenca');
+    const elCargaEq = document.getElementById('kpi-carga-equipe');
+
+    if (elCargaHoras) elCargaHoras.innerText = '0h';
+    if (elCargaOcup) elCargaOcup.innerText = '0%';
+    if (elCargaDif) elCargaDif.innerText = 'Falta 0h';
+    if (elCargaEq) elCargaEq.innerText = '0%';
 }
 
 // Helpers
@@ -1008,10 +1045,18 @@ function renderPerfilDrillDown(df) {
     });
 
     // 5. Carga vs Capacidade
+    // Calcular meta dinâmica baseada no número de meses únicos
+    let mesesUnicos = new Set();
+    df.forEach(i => {
+        if (i.mes) mesesUnicos.add(i.mes);
+    });
+    let numeroMeses = mesesUnicos.size > 0 ? mesesUnicos.size : 1;
+    let metaDinamica = numeroMeses * 120;
+
     let horasPerfil = 0;
     df.forEach(i => horasPerfil += i.horas);
-    let ocupacaoPerfil = (horasPerfil / 120) * 100;
-    let difMeta = 120 - horasPerfil;
+    let ocupacaoPerfil = (horasPerfil / metaDinamica) * 100;
+    let difMeta = metaDinamica - horasPerfil;
 
     let equipePerfisSet = new Set();
     let horasEquipe = 0;
@@ -1021,7 +1066,7 @@ function renderPerfilDrillDown(df) {
     });
     let numPerfisEquipe = equipePerfisSet.size > 0 ? equipePerfisSet.size : 1;
     let mediaHorasEquipe = horasEquipe / numPerfisEquipe;
-    let ocupacaoEquipe = (mediaHorasEquipe / 120) * 100;
+    let ocupacaoEquipe = (mediaHorasEquipe / metaDinamica) * 100;
 
     let elCargaHoras = document.getElementById('kpi-carga-horas');
     let elCargaOcup = document.getElementById('kpi-carga-ocupacao');
@@ -1086,10 +1131,18 @@ function renderPerfilDrillDown(df) {
         }, {
             indexAxis: 'y',
             responsive: true, maintainAspectRatio: false,
+            layout: { padding: { right: 60 } },
             plugins: {
                 legend: { position: 'bottom', labels: { color: theme.text, padding: 10, font: { size: 10 }, usePointStyle: true, pointStyle: 'rectRounded' } },
                 tooltip: { backgroundColor: theme.tooltipBg, callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.raw} h/item` } },
-                datalabels: { display: false }
+                datalabels: {
+                    display: true,
+                    color: theme.text,
+                    anchor: 'end',
+                    align: 'end',
+                    font: { size: 10, weight: 'bold' },
+                    formatter: (val) => val > 0 ? val + 'h' : ''
+                }
             },
             scales: { x: { display: false }, y: { ticks: { color: theme.text, font: { size: 10 } } } }
         });
