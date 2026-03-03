@@ -1,0 +1,105 @@
+/* =========================================
+   Tokens Customizados Muntz
+   ========================================= */
+:root {
+   /* =========================================
+     Typography
+     ========================================= */
+   --font-family-base: 'Gorga Grotesk', 'Outfit', system-ui, sans-serif;
+   --font-weight-light: 300;
+   --font-weight-regular: 400;
+   --font-weight-bold: 700;
+
+   /* =========================================
+     Colors - Principais
+     ========================================= */
+   --color-violeta-muntz: #BD5FFF;
+   --color-violeta-light: #D092FB;
+   --color-violeta-dark: #8936C3;
+
+   --color-ametista: #1F004A;
+   --color-ametista-dark: #1C0B27;
+
+   --color-montanha: #ECE7FA;
+   --color-montanha-light: #E9E0FF;
+
+   /* =========================================
+     Colors - Secundárias
+     ========================================= */
+   --color-orquidea-azul: #0A45E2;
+   --color-vivaz: #C1D82F;
+   --color-laranja-solar: #FF561B;
+
+   /* Cores de Fundo e Texto (Base do SO) */
+   --color-bg-body: #F7F5FA;
+   --color-bg-card: #FFFFFF;
+   --color-text-main: var(--color-ametista-dark);
+   --color-text-muted: #6B7280;
+   --color-text-light: #FFFFFF;
+
+   /* =========================================
+     Bordas & Sombras
+     ========================================= */
+   --radius-sm: 4px;
+   --radius-md: 8px;
+   --radius-lg: 20px;
+   --radius-xl: 24px;
+   --radius-pill: 9999px;
+
+   --shadow-sm: 0 4px 14px rgba(31, 0, 74, 0.03);
+   --shadow-md: 0 8px 24px rgba(31, 0, 74, 0.05);
+   --shadow-lg: 0 16px 40px rgba(31, 0, 74, 0.08);
+
+   /* =========================================
+     Espaçamentos (Spaces)
+     ========================================= */
+   --spacing-1: 0.25rem;
+   /* 4px */
+   --spacing-2: 0.5rem;
+   /* 8px */
+   --spacing-3: 0.75rem;
+   /* 12px */
+   --spacing-4: 1rem;
+   /* 16px */
+   --spacing-5: 1.25rem;
+   /* 20px */
+   --spacing-6: 1.5rem;
+   /* 24px */
+   --spacing-8: 2rem;
+   /* 32px */
+   --spacing-10: 2.5rem;
+   /* 40px */
+   --spacing-12: 3rem;
+   /* 48px */
+}
+
+/* =========================================
+   Tokens Customizados Muntz - Dark Mode
+   ========================================= */
+[data-theme="dark"] {
+   /* Cores de Fundo e Superfície */
+   --color-bg-body: #12091A;
+   /* Ultra-profundo derivado do Ametista */
+   --color-bg-card: #1A0D26;
+   /* Surface elevation 1 */
+   --color-bg-elevated: #241334;
+   /* Surface elevation 2 (Modais, Tooltips) */
+
+   /* Cores de Texto */
+   --color-text-main: #F7F5FA;
+   /* Off-white com toque roxo */
+   --color-text-muted: rgba(247, 245, 250, 0.70);
+   --color-text-disabled: rgba(247, 245, 250, 0.38);
+
+   /* Bordas e Divisões */
+   --border-subtle: rgba(255, 255, 255, 0.08);
+   --border-strong: rgba(189, 95, 255, 0.25);
+
+   /* Sombras Premium adaptadas para o Dark Mode */
+   --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.3);
+   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+   --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
+
+   /* Gradiente sutil e Hairline Border (Glassmorphism leve) */
+   --card-inner-glow: 1px solid rgba(255, 255, 255, 0.06);
+}

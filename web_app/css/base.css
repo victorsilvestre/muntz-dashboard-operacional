@@ -1,0 +1,57 @@
+/* =========================================
+   Base Styles Muntz
+   ========================================= */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-family-base);
+    font-weight: var(--font-weight-regular);
+    color: var(--color-text-main);
+    background-color: var(--color-bg-body);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-weight: var(--font-weight-bold);
+    line-height: 1.2;
+    margin-bottom: var(--spacing-4);
+    color: var(--color-ametista-dark);
+}
+
+p {
+    margin-bottom: var(--spacing-4);
+}
+
+a {
+    color: var(--color-orquidea-azul);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+a:hover {
+    color: var(--color-violeta-muntz);
+}
+
+ul,
+ol {
+    list-style-position: inside;
+    margin-bottom: var(--spacing-4);
+}
+
+img {
+    max-width: 100%;
+    display: block;
+}

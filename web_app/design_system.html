@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Muntz - Design System</title>
+  
+  <!-- Fallback font (Outfit) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  
+  <style>
+    /* Estilos apenas para exibição do Design System */
+    .ds-container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+    .ds-section { margin-bottom: 60px; }
+    .ds-title { border-bottom: 2px solid var(--color-montanha); padding-bottom: 10px; margin-bottom: 30px; }
+    .color-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 20px; }
+    .color-swatch { border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow-sm); }
+    .color-swatch-box { height: 100px; }
+    .color-swatch-info { padding: 10px; background: white; font-size: 0.8rem; }
+    
+    .element-grid { display: flex; flex-wrap: wrap; gap: 20px; align-items: center; margin-bottom: 20px; }
+  </style>
+</head>
+<body class="ds-container">
+
+  <h1 style="text-align: center; color: var(--color-violeta-muntz); margin-bottom: var(--spacing-8);">
+    Design System - Muntz Dashboard
+  </h1>
+
+  <section class="ds-section">
+    <h2 class="ds-title">1. Cores e Brand</h2>
+    
+    <h3 style="margin-bottom: 15px;">Cores Principais</h3>
+    <div class="color-grid" style="margin-bottom: 30px;">
+      <div class="color-swatch">
+        <div class="color-swatch-box" style="background: var(--color-violeta-muntz);"></div>
+        <div class="color-swatch-info"><strong>Violeta Muntz</strong><br>--color-violeta-muntz</div>
+      </div>
+      <div class="color-swatch">
+        <div class="color-swatch-box" style="background: var(--color-ametista);"></div>
+        <div class="color-swatch-info"><strong>Ametista</strong><br>--color-ametista</div>
+      </div>
+      <div class="color-swatch">
+        <div class="color-swatch-box" style="background: var(--color-ametista-dark);"></div>
+        <div class="color-swatch-info"><strong>Ametista Dark</strong><br>--color-ametista-dark</div>
+      </div>
+      <div class="color-swatch">
+        <div class="color-swatch-box" style="background: var(--color-montanha);"></div>
+        <div class="color-swatch-info"><strong>Montanha</strong><br>--color-montanha</div>
+      </div>
+    </div>
+
+    <h3 style="margin-bottom: 15px;">Cores Secundárias (Destaques)</h3>
+    <div class="color-grid">
+      <div class="color-swatch">
+        <div class="color-swatch-box" style="background: var(--color-orquidea-azul);"></div>
+        <div class="color-swatch-info"><strong>Orquídea Azul</strong><br>--color-orquidea-azul</div>
+      </div>
+      <div class="color-swatch">
+        <div class="color-swatch-box" style="background: var(--color-vivaz);"></div>
+        <div class="color-swatch-info"><strong>Vivaz</strong><br>--color-vivaz</div>
+      </div>
+      <div class="color-swatch">
+        <div class="color-swatch-box" style="background: var(--color-laranja-solar);"></div>
+        <div class="color-swatch-info"><strong>Laranja Solar</strong><br>--color-laranja-solar</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="ds-section">
+    <h2 class="ds-title">2. Tipografia</h2>
+    <div>
+      <h1 style="font-weight: var(--font-weight-light);">Headline 1 - Light 300 (Gorga/Outfit)</h1>
+      <h1>Headline 1 - Normal (Gorga/Outfit)</h1>
+      <h2 style="font-weight: var(--font-weight-bold);">Headline 2 - Bold 700 (Gorga/Outfit)</h2>
+      <h3>Headline 3</h3>
+      <p>Parágrafo Body Text (Light ou Regular dependendo do caso). Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi egestas in magna quis maximus. Fusce cursus diam libero, at rutrum augue sodales congue.</p>
+    </div>
+  </section>
+
+  <section class="ds-section">
+    <h2 class="ds-title">3. Componentes de Interface</h2>
+    
+    <h3 style="margin-bottom: 15px;">Botões (Buttons)</h3>
+    <div class="element-grid">
+      <button class="btn btn-primary">Primary Action</button>
+      <button class="btn btn-secondary">Secondary Action</button>
+      <button class="btn btn-accent">Accent Action</button>
+      <button class="btn btn-outline">Outline Action</button>
+      <button class="btn btn-primary" disabled>Disabled</button>
+    </div>
+
+    <h3 style="margin-bottom: 15px;">Badges</h3>
+    <div class="element-grid">
+      <span class="badge badge-info">Info / Default</span>
+      <span class="badge badge-success">Concluído</span>
+      <span class="badge badge-warning">Atenção</span>
+    </div>
+
+    <h3 style="margin-bottom: 15px;">Formulários (Inputs & Toggles)</h3>
+    <div style="max-width: 400px; margin-bottom: 30px;">
+      <div class="form-group">
+        <label class="form-label">Input de Texto (Pesquisa)</label>
+        <input type="text" class="input-base" placeholder="Digite algo...">
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Select Básico</label>
+        <select class="select-base">
+          <option>Opção 1</option>
+          <option>Opção 2</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <span class="form-label">Toggle Switch</span>
+        <label class="toggle-wrapper" style="margin-top: 10px;">
+          <input type="checkbox" class="toggle-input">
+          <span class="toggle-label"></span>
+          <span>Desativado / Ativado</span>
+        </label>
+      </div>
+    </div>
+
+    <h3 style="margin-bottom: 15px;">Cards de Gráficos/KPIs</h3>
+    <div class="grid-metrics">
+      <div class="card">
+        <p class="form-label" style="margin: 0; color: var(--color-text-muted);">Horas Totais</p>
+        <h2 style="margin: 5px 0 0; color: var(--color-violeta-muntz); font-size: 2.5rem;">420h</h2>
+        <span class="badge badge-success">Em linha com a meta</span>
+      </div>
+      
+      <div class="card">
+        <p class="form-label" style="margin: 0; color: var(--color-text-muted);">Taxa de Ajustes</p>
+        <h2 style="margin: 5px 0 0; color: var(--color-laranja-solar); font-size: 2.5rem;">28%</h2>
+        <span class="badge badge-warning">Acima da média (+5%)</span>
+      </div>
+    </div>
+  </section>
+
+</body>
+</html>

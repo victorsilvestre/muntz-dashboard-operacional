@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Muntz | Dashboard Operacional Avançado</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet">
+
+    <!-- Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+
+    <!-- Libs -->
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/tokens.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+
+<body class="light-theme">
+
+    <div class="app-layout">
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="brand">
+                    <img src="../assets/logomarca/Logo-Muntz-Versão Principal-Ametista@2x.svg" alt="Muntz Logo"
+                        class="brand-logo-full">
+                </div>
+                <button id="btn-toggle-sidebar" class="btn-icon" title="Recolher Menu">
+                    <i class="ri-menu-fold-line"></i>
+                </button>
+            </div>
+
+            <nav class="sidebar-content">
+                <ul class="nav-menu">
+                    <li class="nav-item active">
+                        <a href="#"><i class="ri-dashboard-line"></i> <span class="nav-text">Visão Geral</span></a>
+                    </li>
+                    <li class="nav-item inactive">
+                        <a href="#"><i class="ri-folder-chart-line"></i> <span class="nav-text">Projetos (Em
+                                breve)</span></a>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="db-status">
+                    <i class="ri-database-2-line"></i>
+                    <span id="record-count" class="nav-text">Analisando 0 registros</span>
+                </div>
+                <div class="theme-switch-wrapper">
+                    <button id="theme-toggle" class="theme-switch-btn" aria-label="Alternar Modo Escuro">
+                        <i class="ri-moon-line theme-icon" id="theme-icon"></i>
+                        <span class="theme-label nav-text">Modo Escuro</span>
+                        <div class="switch-track">
+                            <div class="switch-thumb"></div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            <header class="topbar">
+                <div class="page-title">
+                    <h1>Visão Geral da Operação</h1>
+                    <p>Métricas cruzadas em tempo real</p>
+                </div>
+                <div class="top-actions">
+                    <div class="date-range-badge">
+                        <i class="ri-calendar-line"></i>
+                        <span>Período disponível: 01/01 a 28/02/2026</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- FILTERS IN-PAGE -->
+            <div class="filters-toolbar glass-card">
+                <div class="filters-toolbar-header">
+                    <h3><i class="ri-filter-3-line"></i> Refine os Dados</h3>
+                    <button id="btn-reset-filters" class="btn-text">Limpar Filtros</button>
+                </div>
+
+                <div class="filters-toolbar-body">
+                    <div class="filter-group">
+                        <label for="filter-mes">Mês</label>
+                        <select id="filter-mes" class="glass-select">
+                            <option value="all">Todo o Período</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="filter-cliente">Cliente</label>
+                        <select id="filter-cliente" class="glass-select">
+                            <option value="all">Todos os clientes</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="filter-equipe">Equipe</label>
+                        <select id="filter-equipe" class="glass-select">
+                            <option value="all">Todas as equipes</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="filter-perfil">Perfil (Responsável)</label>
+                        <select id="filter-perfil" class="glass-select">
+                            <option value="all">Todos os perfis</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="filter-tipo">Tipo</label>
+                        <select id="filter-tipo" class="glass-select">
+                            <option value="all">Todos os tipos</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group checks-group toolbar-checks">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="filter-urgente" value="Sim">
+                            <span class="slider"></span>
+                            <span class="label-text">Urgentes</span>
+                        </label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="filter-atraso" value="Sim">
+                            <span class="slider"></span>
+                            <span class="label-text">Atrasados</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPIs -->
+            <div class="kpi-grid">
+                <div class="kpi-card glass-card kpi-primary">
+                    <div class="kpi-icon"><i class="ri-time-line"></i></div>
+                    <div class="kpi-data">
+                        <h3 id="kpi-horas">0h</h3>
+                        <p>Total de Horas</p>
+                    </div>
+                </div>
+
+                <div class="kpi-card glass-card">
+                    <div class="kpi-icon"><i class="ri-task-line"></i></div>
+                    <div class="kpi-data">
+                        <h3 id="kpi-tarefas">0</h3>
+                        <p>Demandas Únicas</p>
+                    </div>
+                </div>
+
+                <div class="kpi-card glass-card kpi-warning">
+                    <div class="kpi-icon"><i class="ri-alarm-warning-line"></i></div>
+                    <div class="kpi-data">
+                        <h3 id="kpi-atraso">0%</h3>
+                        <p>Taxa de Atraso</p>
+                    </div>
+                </div>
+
+                <div class="kpi-card glass-card kpi-accent">
+                    <div class="kpi-icon"><i class="ri-flashlight-line"></i></div>
+                    <div class="kpi-data">
+                        <h3 id="kpi-urgente">0%</h3>
+                        <p>Volume Urgente</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Matrix -->
+            <div class="charts-grid">
+                <!-- Esforço por Cliente -->
+                <div class="chart-card glass-card span-8">
+                    <div class="card-header">
+                        <h3><i class="ri-bar-chart-horizontal-line"></i> Horas consumidas por Cliente</h3>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="chart-clientes"></canvas>
+                    </div>
+                </div>
+
+                <!-- Refação x Criação (Demandas vs Ajustes) -->
+                <div class="chart-card glass-card span-4">
+                    <div class="card-header">
+                        <h3><i class="ri-pie-chart-2-line"></i> Taxa de Refação (Tipo)</h3>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="chart-tipo"></canvas>
+                    </div>
+                </div>
+
+                <!-- Alocação Tática: Equipes e Horas -->
+                <div class="chart-card glass-card span-6">
+                    <div class="card-header">
+                        <h3><i class="ri-group-line"></i> Carga Operacional por Equipe</h3>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="chart-equipes"></canvas>
+                    </div>
+                </div>
+
+                <!-- Esforço Tag -->
+                <div class="chart-card glass-card span-6">
+                    <div class="card-header">
+                        <h3><i class="ri-price-tag-3-line"></i> Especialidades Densas (Tags)</h3>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="chart-tags"></canvas>
+                    </div>
+                </div>
+
+                <!-- Top Perfis Horas -->
+                <div class="chart-card glass-card span-12">
+                    <div class="card-header">
+                        <h3><i class="ri-user-star-line"></i> Ranking de Horas Apontadas por Perfil</h3>
+                    </div>
+                    <div class="chart-body" style="height: 300px;">
+                        <canvas id="chart-perfis"></canvas>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Application Script -->
+    <script type="module" src="js/dashboard.js"></script>
+</body>
+
+</html>
