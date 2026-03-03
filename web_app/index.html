@@ -49,6 +49,9 @@
                     <li class="nav-item" id="nav-perfil">
                         <a href="#"><i class="ri-user-settings-line"></i> <span class="nav-text">Perfil</span></a>
                     </li>
+                    <li class="nav-item" id="nav-tempo-execucao">
+                        <a href="#"><i class="ri-timer-line"></i> <span class="nav-text">Tempo de Execução</span></a>
+                    </li>
                     <li class="nav-item inactive">
                         <a href="#"><i class="ri-folder-chart-line"></i> <span class="nav-text">Projetos (Em
                                 breve)</span></a>
@@ -465,6 +468,116 @@
                 </div>
 
             </div> <!-- FIM PAGE: PERFIL -->
+
+            <!-- PAGE: TEMPO DE EXECUÇÃO -->
+            <div id="page-tempo-execucao" class="dashboard-page hidden">
+                <!-- KPIs Gerais -->
+                <div class="kpi-grid">
+                    <div class="kpi-card glass-card">
+                        <div class="kpi-icon"><i class="ri-task-line"></i></div>
+                        <div class="kpi-data">
+                            <h3 id="kpi-total-tarefas-tempo">0</h3>
+                            <p>Tarefas Analisadas</p>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card glass-card kpi-primary">
+                        <div class="kpi-icon"><i class="ri-time-line"></i></div>
+                        <div class="kpi-data">
+                            <h3 id="kpi-total-horas-tempo">0h</h3>
+                            <p>Total de Horas</p>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card glass-card">
+                        <div class="kpi-icon"><i class="ri-bar-chart-line"></i></div>
+                        <div class="kpi-data">
+                            <h3 id="kpi-tempo-medio-geral">0h</h3>
+                            <p>Tempo Médio por Tarefa</p>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card glass-card">
+                        <div class="kpi-icon"><i class="ri-equalizer-line"></i></div>
+                        <div class="kpi-data">
+                            <h3 id="kpi-mediana-tempo">0h</h3>
+                            <p>Mediana de Tempo</p>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card glass-card kpi-accent">
+                        <div class="kpi-icon"><i class="ri-speed-up-line"></i></div>
+                        <div class="kpi-data">
+                            <h3 id="kpi-tempo-minimo">0h</h3>
+                            <p>Tempo Mínimo</p>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card glass-card kpi-warning">
+                        <div class="kpi-icon"><i class="ri-timer-flash-line"></i></div>
+                        <div class="kpi-data">
+                            <h3 id="kpi-tempo-maximo">0h</h3>
+                            <p>Tempo Máximo</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Grid -->
+                <div class="charts-grid">
+
+                    <!-- Distribuição do Tempo (Histograma) -->
+                    <div class="chart-card glass-card span-6">
+                        <div class="card-header">
+                            <h3><i class="ri-bar-chart-box-line"></i> Distribuição do Tempo</h3>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="chart-distribuicao-tempo"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Tempo de Execução Por Complexidade -->
+                    <div class="chart-card glass-card span-6">
+                        <div class="card-header">
+                            <h3><i class="ri-stack-line"></i> Tempo de Execução Por Complexidade</h3>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="chart-tempo-complexidade"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Tempo de Execução Por Tag -->
+                    <div class="chart-card glass-card span-12">
+                        <div class="card-header">
+                            <h3><i class="ri-price-tag-3-line"></i> Tempo de Execução Por Tag</h3>
+                            <button id="btn-expand-tags" class="btn-text">Mostrar Todas</button>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="chart-tempo-tags"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Tempo de Execução Por Tipo -->
+                    <div class="chart-card glass-card span-6">
+                        <div class="card-header">
+                            <h3><i class="ri-folder-line"></i> Tempo de Execução Por Tipo</h3>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="chart-tempo-tipos"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Tempo de Execução Por Cliente -->
+                    <div class="chart-card glass-card span-6">
+                        <div class="card-header">
+                            <h3><i class="ri-building-line"></i> Tempo de Execução Por Cliente</h3>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="chart-tempo-clientes"></canvas>
+                        </div>
+                    </div>
+
+                </div>
+            </div> <!-- FIM PAGE: TEMPO DE EXECUÇÃO -->
 
         </main>
     </div>
