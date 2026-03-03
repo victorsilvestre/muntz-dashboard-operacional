@@ -991,6 +991,200 @@ function renderPerfilDrillDown(df) {
             }
         }
     });
+
+    // ----------------------------------------------------
+    // NOVOS GRÁFICOS E ANÁLISES INSERIDOS (SPEC)
+    // ----------------------------------------------------
+
+    const targetEquipe = df.length > 0 ? df[0].equipe : '';
+    let dfEquipe = STATE.rawData.filter(item => {
+        if (STATE.filters.urgente && item.urgente !== 'Sim') return false;
+        if (STATE.filters.atraso && item.atraso !== 'Sim') return false;
+        if (STATE.filters.mes !== 'all' && item.mes !== STATE.filters.mes) return false;
+        if (STATE.filters.cliente !== 'all' && item.cliente !== STATE.filters.cliente) return false;
+        if (STATE.filters.tipo !== 'all' && item.tipo !== STATE.filters.tipo) return false;
+        if (item.equipe !== targetEquipe) return false;
+        return true;
+    });
+
+    // 5. Carga vs Capacidade
+    let horasPerfil = 0;
+    df.forEach(i => horasPerfil += i.horas);
+    let ocupacaoPerfil = (horasPerfil / 120) * 100;
+    let difMeta = 120 - horasPerfil;
+
+    let equipePerfisSet = new Set();
+    let horasEquipe = 0;
+    dfEquipe.forEach(i => {
+        equipePerfisSet.add(i.perfil);
+        horasEquipe += i.horas;
+    });
+    let numPerfisEquipe = equipePerfisSet.size > 0 ? equipePerfisSet.size : 1;
+    let mediaHorasEquipe = horasEquipe / numPerfisEquipe;
+    let ocupacaoEquipe = (mediaHorasEquipe / 120) * 100;
+
+    let elCargaHoras = document.getElementById('kpi-carga-horas');
+    let elCargaOcup = document.getElementById('kpi-carga-ocupacao');
+    let elCargaDif = document.getElementById('kpi-carga-diferenca');
+    let elCargaEq = document.getElementById('kpi-carga-equipe');
+    if (elCargaHoras) elCargaHoras.innerText = horasPerfil.toFixed(1) + 'h';
+    if (elCargaOcup) elCargaOcup.innerText = ocupacaoPerfil.toFixed(0) + '%';
+    if (elCargaDif) elCargaDif.innerText = (difMeta >= 0 ? 'Falta ' : '+') + Math.abs(difMeta).toFixed(1) + 'h';
+    if (elCargaEq) elCargaEq.innerText = ocupacaoEquipe.toFixed(0) + '%';
+
+    // 2. Produtividade e Eficiência (Tempos Médios)
+    function getTempoMedioPorEixo(baseDf) {
+        let eixoTipo = {}, eixoTag = {}, eixoCx = {};
+        let idAcc = {};
+        baseDf.forEach(r => {
+            if (!idAcc[r.id]) idAcc[r.id] = 0;
+            idAcc[r.id] += r.horas;
+        });
+        baseDf.forEach(r => {
+            let qtd = r.quantidade > 0 ? r.quantidade : 1;
+            let kTipo = r.tipo || '(Vazios)';
+            if (!eixoTipo[kTipo]) eixoTipo[kTipo] = { h: 0, i: 0 };
+            eixoTipo[kTipo].h += r.horas;
+            eixoTipo[kTipo].i += qtd;
+
+            if (r.tags && r.tags.length > 0) {
+                r.tags.forEach(t => {
+                    let kTag = t.trim() || '(Vazias)';
+                    if (!eixoTag[kTag]) eixoTag[kTag] = { h: 0, i: 0 };
+                    eixoTag[kTag].h += r.horas;
+                    eixoTag[kTag].i += qtd;
+                });
+            } else {
+                if (!eixoTag['(Vazias)']) eixoTag['(Vazias)'] = { h: 0, i: 0 };
+                eixoTag['(Vazias)'].h += r.horas;
+                eixoTag['(Vazias)'].i += qtd;
+            }
+
+            let hTask = idAcc[r.id];
+            let kCx = hTask <= 3 ? 'Baixa' : (hTask <= 8 ? 'Média' : 'Alta');
+            if (!eixoCx[kCx]) eixoCx[kCx] = { h: 0, i: 0 };
+            eixoCx[kCx].h += r.horas;
+            eixoCx[kCx].i += qtd;
+        });
+        return { eixoTipo, eixoTag, eixoCx };
+    }
+
+    let perfData = getTempoMedioPorEixo(df);
+    let equipeData = getTempoMedioPorEixo(dfEquipe);
+
+    function buildTempoMedioChart(ctxId, keys, perfMap, eqMap) {
+        let labels = keys.slice(0, 6);
+        let dPerf = labels.map(k => perfMap[k] ? perfMap[k].h / perfMap[k].i : 0);
+        let dEq = labels.map(k => eqMap[k] ? eqMap[k].h / eqMap[k].i : 0);
+
+        generateChart(ctxId, 'bar', {
+            labels: labels.map(l => truncateString(l, 12)),
+            datasets: [
+                { label: 'Perfil', data: dPerf.map(v => v.toFixed(2)), backgroundColor: COLORS.violetPrimary, borderRadius: 3, borderWidth: 0 },
+                { label: 'Média Equipe', data: dEq.map(v => v.toFixed(2)), backgroundColor: 'rgba(230, 252, 83, 0.4)', borderColor: COLORS.vivaz, borderWidth: 1, borderRadius: 3 }
+            ]
+        }, {
+            indexAxis: 'y',
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { color: theme.text, padding: 10, font: { size: 10 }, usePointStyle: true, pointStyle: 'rectRounded' } },
+                tooltip: { backgroundColor: theme.tooltipBg, callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.raw} h/item` } },
+                datalabels: { display: false }
+            },
+            scales: { x: { display: false }, y: { ticks: { color: theme.text, font: { size: 10 } } } }
+        });
+    }
+
+    let sortedTipos = Object.keys(perfData.eixoTipo).sort((a, b) => perfData.eixoTipo[b].i - perfData.eixoTipo[a].i);
+    buildTempoMedioChart('chart-tempomedio-tipo', sortedTipos, perfData.eixoTipo, equipeData.eixoTipo);
+
+    let sortedTags = Object.keys(perfData.eixoTag).sort((a, b) => perfData.eixoTag[b].i - perfData.eixoTag[a].i);
+    buildTempoMedioChart('chart-tempomedio-tag', sortedTags, perfData.eixoTag, equipeData.eixoTag);
+
+    let cxKeys = ['Baixa', 'Média', 'Alta'];
+    buildTempoMedioChart('chart-tempomedio-complexidade', cxKeys, perfData.eixoCx, equipeData.eixoCx);
+
+    // 3. Especialização do Perfil
+    function buildEspecializacaoChart(ctxId, sortedKeys, perfMap, limit) {
+        let keys = sortedKeys.slice(0, limit);
+        let total = Object.values(perfMap).reduce((sum, val) => sum + val.i, 0);
+        let dataVals = keys.map(k => total > 0 ? ((perfMap[k].i / total) * 100) : 0);
+
+        generateChart(ctxId, 'bar', {
+            labels: keys.map(k => truncateString(k, 15)),
+            datasets: [{
+                data: dataVals.map(v => v.toFixed(1)),
+                backgroundColor: COLORS.palettes.mixed,
+                borderRadius: 4
+            }]
+        }, {
+            indexAxis: 'y',
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: { backgroundColor: theme.tooltipBg, callbacks: { label: (ctx) => `${ctx.raw}% do trabalho do perfil` } },
+                datalabels: {
+                    display: true, color: theme.text,
+                    anchor: 'end', align: 'end',
+                    font: { size: 10, weight: 'bold' },
+                    formatter: v => v > 0 ? v + '%' : ''
+                }
+            },
+            scales: { x: { display: false, max: 100 }, y: { ticks: { color: theme.text, font: { size: 10 } } } }
+        });
+    }
+
+    buildEspecializacaoChart('chart-especializacao-tags', sortedTags, perfData.eixoTag, 10);
+    buildEspecializacaoChart('chart-especializacao-tipos', sortedTipos, perfData.eixoTipo, 3);
+
+    // 4. Evolução no Tempo
+    let evolucaoMap = {};
+    df.forEach(r => {
+        let dataStr = typeof r.dataCriacao === 'string' ? r.dataCriacao.trim() : '';
+        let groupKey = '';
+        if (STATE.filters.mes === 'all' || STATE.filters.mes === '') {
+            groupKey = r.mes || 'Desconhecido';
+        } else {
+            let parts = dataStr.split('/');
+            groupKey = parts.length >= 2 ? `${parts[0]}/${parts[1]}` : dataStr || 'Desconhecido';
+        }
+
+        if (!evolucaoMap[groupKey]) evolucaoMap[groupKey] = { h: 0, tar: new Set(), i: 0 };
+        evolucaoMap[groupKey].h += r.horas;
+        evolucaoMap[groupKey].i += r.quantidade > 0 ? r.quantidade : 1;
+        evolucaoMap[groupKey].tar.add(r.id);
+    });
+
+    let evolucaoKeys = Object.keys(evolucaoMap);
+    if (STATE.filters.mes !== 'all' && STATE.filters.mes !== '') {
+        evolucaoKeys.sort((a, b) => parseInt(a.split('/')[0]) - parseInt(b.split('/')[0]));
+    }
+
+    let evoH = evolucaoKeys.map(k => evolucaoMap[k].h.toFixed(1));
+    let evoI = evolucaoKeys.map(k => evolucaoMap[k].i);
+    let evoT = evolucaoKeys.map(k => evolucaoMap[k].tar.size);
+
+    generateChart('chart-evolucao-tempo', 'bar', {
+        labels: evolucaoKeys.map(k => truncateString(k, 12)),
+        datasets: [
+            { type: 'bar', label: 'Horas (Esforço)', data: evoH, backgroundColor: 'rgba(189, 95, 255, 0.25)', borderColor: COLORS.violetPrimary, borderWidth: 1, yAxisID: 'y1', borderRadius: 4 },
+            { type: 'line', label: 'Nº Itens', data: evoI, borderColor: COLORS.vivaz, backgroundColor: COLORS.vivaz, borderWidth: 2, pointRadius: 4, yAxisID: 'y2', tension: 0.3 },
+            { type: 'line', label: 'Tarefas Ún.', data: evoT, borderColor: COLORS.laranjaSolar, backgroundColor: COLORS.laranjaSolar, borderWidth: 2, pointRadius: 4, yAxisID: 'y2', tension: 0.3 }
+        ]
+    }, {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+            legend: { position: 'top', labels: { color: theme.text, usePointStyle: true, font: { size: 11 } } },
+            tooltip: { backgroundColor: theme.tooltipBg, mode: 'index', intersect: false },
+            datalabels: { display: false }
+        },
+        scales: {
+            x: { ticks: { color: theme.text }, grid: { color: theme.grid } },
+            y1: { type: 'linear', display: true, position: 'left', ticks: { color: theme.text }, grid: { color: theme.grid }, title: { display: true, text: 'Horas', color: theme.text } },
+            y2: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { color: theme.text }, title: { display: true, text: 'Volume', color: theme.text } }
+        }
+    });
+
 }
 
 // Start Application
