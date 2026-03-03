@@ -61,7 +61,9 @@ Visa avaliar a velocidade de entrega comparativa. Serão visões separadas demon
 - **Tipo de Tarefa** (Ex: Demandas - 48 itens | 24 horas | 0:30 média)
 - **Tag** (Ex: cria - peça digital | 60 itens | 120 horas | 2:00 média)
 - **Complexidade** (Ex: Baixa Complexidade | 6 itens | 2 horas | 0:20 média)
-*Requisito em todos os gráficos:* Exibir a **comparação com a média da equipe** (benchmark) para visualizarmos claramente se os tempos do perfil são maiores ou menores que a média de seus pares. Serão sugeridos gráficos separados.
+*Requisitos em todos os gráficos:*
+- Exibir a **comparação com a média da equipe** (benchmark) para visualizarmos claramente se os tempos do perfil são maiores ou menores que a média de seus pares.
+- **Data Labels obrigatórios:** Os valores numéricos (tempo médio em horas) devem ser exibidos diretamente nas barras dos gráficos, seguindo os mesmos padrões de formatação e espaçamento já aplicados em outros gráficos do dashboard para evitar sobreposição ou corte de informação.
 
 **3️⃣ Especialização do Perfil**
 Responde à pergunta: "Esse perfil é especialista ou generalista?".
@@ -81,24 +83,39 @@ Mostra a dinâmica temporal (crescimento, picos, sobrecarga e mudança de perfil
 
 **5️⃣ Carga vs Capacidade**
 Contextualiza o esforço realizado visando um norte de entrega esperado.
-- **Meta base:** 120 horas de capacidade produtiva ideal por mês.
+- **Meta base dinâmica:** 120 horas de capacidade produtiva ideal **por mês**.
+  - **Regra de Cálculo:** Se os dados exibidos corresponderem a apenas 1 mês, a meta será de 120h. Se os dados corresponderem a múltiplos meses (ex: 2 meses), a meta será proporcional (ex: 240h para 2 meses).
 - **Métricas Adicionadas:**
-  - Horas realizadas no mês
-  - % de ocupação estimada (Horas realizadas frente à meta)
+  - Horas realizadas no período selecionado
+  - % de ocupação estimada (Horas realizadas frente à meta dinâmica)
   - Diferença estrutural (Saldo para a meta)
 - *Requisito:* Adicionar paralelamente a **comparação da métrica deste perfil com a média da sua equipe.**
 
 ## 3. Dinâmica de Interação e Navegação
 - **Adição na Sidebar:** A barra lateral (sidebar) ganhará o novo botão "Perfil", posicionado abaixo do botão "Visão Geral". A navegação alternará o conteúdo central (SPA - Single Page Application) sem recarregar a página, mantendo os dados cacheados na memória.
-- **Cross-filtering Direto:** O Bloco Específico deve se comportar de maneira reativa. Quando a aba abrir sem perfil selecionado, ele pode apresentar um estado vazio amigável ("Selecione um perfil para ver seus dados específicos") ou agregar as métricas de todos (embora menos legível, é uma opção técnica). Ao cruzar a seleção de filtro (ex: Perfil = Designer X), os dados do Bloco Específico se preenchem automaticamente.
+- **Cross-filtering Direto:** O Bloco Específico (Visão Específica) deve se comportar de maneira reativa. Quando a aba abrir sem perfil selecionado, o bloco permanecerá oculto automaticamente, sem necessidade de exibir mensagens de estado vazio. Ao selecionar um perfil específico no filtro (ex: Perfil = Designer X), os dados do Bloco Específico se preenchem e aparecem automaticamente.
 
 ## 4. Requisitos de UX/UI (Design System)
 - **Consistência:** A tela seguirá à risca o Tema Claro Premium (Muntz.OPS) já documentado, com tipografia, contrastes, bordas sutis e fundo claro.
+- **Modo Escuro (Dark Theme):** Garantir contraste adequado em todos os textos, ícones e elementos visuais quando o modo escuro estiver ativo, especialmente em:
+  - Títulos e subtítulos de gráficos
+  - Cards de KPI e seus ícones
+  - Labels e legendas
+  - Textos secundários e descritivos
 - **Transições:** A troca entre a aba "Visão Geral" e "Perfil" deve ser suave, com *fade-in* nos gráficos para trazer uma percepção de agilidade do sistema.
-- **Layout dos Blocos:** 
+- **Layout dos Blocos:**
   - Os *Filtros* ficarão no topo fixos no fluxo da página.
   - O bloco *Geral* pode ocupar a porção superior das análises com cartões e gráficos mais largos.
   - O bloco *Específico* concentrará análises mais agrupadas, possivelmente dividindo a tela em grid (ex: dois gráficos lado a lado) para visualização consolidada do colaborador.
 
-## 5. Próximos Passos
+## 5. Histórico de Ajustes e Melhorias
+
+### Versão 1.1 - Refinamentos UX/UI (03/03/2026)
+**Ajustes implementados:**
+1. **Carga vs Capacidade - Meta Dinâmica:** A meta de referência agora é proporcional ao período analisado (120h por mês). Se 2 meses estiverem selecionados, a meta será 240h.
+2. **Contraste de Texto em Modo Escuro/Claro:** Correção de problemas de legibilidade em textos/ícones do card "Média da Equipe" no modo escuro e subtítulo do gráfico "Evolução no Tempo" no modo claro.
+3. **Data Labels em Produtividade e Eficiência:** Adição de valores numéricos visíveis nos gráficos "Por Tipo de Tarefa", "Por Especialidade (Tag)" e "Por Complexidade", com tratamento adequado de margens para evitar sobreposição.
+4. **Remoção do Estado Vazio:** Eliminação do card "Selecione um único Perfil nos filtros..." da Visão Específica. O bloco agora simplesmente fica oculto quando nenhum perfil está selecionado.
+
+## 6. Próximos Passos
 Validação desta documentação (PRD) para atestar que os dados sugeridos nos blocos Geral e Específico atendem à dor da gestão. Na sequência, avança-se para a Especificação Técnica (SPEC) que desenhará a engenharia de código necessária para incluir essa funcionalidade e estender a base local sem quebras de performance.

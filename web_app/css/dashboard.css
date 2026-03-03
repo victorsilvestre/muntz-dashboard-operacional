@@ -820,3 +820,22 @@ input:checked+.slider::before {
     background: rgba(255, 255, 255, 0.05);
     /* Lighter on dark bg */
 }
+
+/* ===========================
+   Correções de Contraste - Modo Escuro/Claro
+   =========================== */
+
+/* Card "Média da Equipe" - Modo Escuro */
+[data-theme="dark"] #kpi-carga-equipe {
+    color: var(--color-vivaz) !important;
+}
+
+[data-theme="dark"] .kpi-card .kpi-icon[style*="color: var(--color-ametista)"] {
+    color: var(--color-violeta-light) !important;
+    background: rgba(189, 95, 255, 0.15) !important;
+}
+
+/* Subtítulo "Evolução no Tempo" - Modo Claro */
+.chart-subtitle-muted {
+    color: var(--color-text-muted);
+}
