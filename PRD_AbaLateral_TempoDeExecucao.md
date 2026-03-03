@@ -45,7 +45,7 @@ Cartões numéricos (KPI Cards) posicionados no topo do bloco, apresentando indi
 - **Exibição Inicial Limitada:** Mostrar as **10 tags com maior quantidade de tarefas**.
 - **Ordenação:** Tags ordenadas por **quantidade de tarefas** (descendente).
 - **Expansão sob Demanda:** Botão "Mostrar Todas" posicionado no **canto superior direito** do card (similar ao botão "Limpar Filtros"), que expande a listagem completa de tags.
-- **Altura Dinâmica:** O gráfico ajusta automaticamente sua altura baseado no número de tags exibidas (mínimo 35px por tag).
+- **Altura Dinâmica:** O gráfico ajusta automaticamente sua altura baseado no número de tags exibidas (mínimo 50px por tag).
 
 **Formato dos Dados:**
 - Tempo Médio e Mediana: em formato **hh:mm** (ex: 2:30h).
@@ -168,7 +168,7 @@ Cartões numéricos (KPI Cards) posicionados no topo do bloco, apresentando indi
 1. **Formato de Horas:** Conversão de formato decimal (2.5h) para hh:mm (2:30h) em todos os indicadores.
 2. **Ordenação de Tags:** Alteração de ordenação por "total de horas" para "quantidade de tarefas" (descendente).
 3. **Posicionamento do Botão:** Movido botão "Mostrar Todas" para canto superior direito do card.
-4. **Altura Dinâmica:** Gráfico de tags ajusta altura automaticamente (35px por tag, mínimo 300px).
+4. **Altura Dinâmica:** Gráfico de tags ajusta altura automaticamente (50px por tag, mínimo 400px), garantindo respiro adequado entre as barras.
 5. **Ícone Tempo Máximo:** Adicionado ícone `ri-timer-flash-line` ao card KPI.
 6. **Remoção de Subtítulos:** Removidos subtítulos de todos os gráficos para manter padrão das outras abas.
 7. **Espaçamento de Labels:** Adicionado padding top de 30px no histograma para evitar corte de números.

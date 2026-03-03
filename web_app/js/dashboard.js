@@ -1462,7 +1462,7 @@ function renderDistribuicaoTempo(tarefas) {
                 tooltip: {
                     backgroundColor: theme.tooltipBg,
                     callbacks: {
-                        afterLabel: function(context) {
+                        afterLabel: function (context) {
                             return distribuicao[context.dataIndex].percent + '% do total';
                         }
                     }
@@ -1554,7 +1554,7 @@ function renderTempoPorComplexidade(tarefas) {
                 tooltip: {
                     backgroundColor: theme.tooltipBg,
                     callbacks: {
-                        afterBody: function(items) {
+                        afterBody: function (items) {
                             const idx = items[0].dataIndex;
                             return [
                                 'Nº Tarefas: ' + dados[idx].numTarefas,
@@ -1620,8 +1620,8 @@ function renderTempoPorTags(tarefas) {
     if (!ctx) return;
 
     // Ajustar altura do canvas dinamicamente baseado no número de tags
-    const minHeight = 300;
-    const barHeight = 35; // Altura por barra incluindo espaçamento
+    const minHeight = 400; // Aumentar altura mínima
+    const barHeight = 50; // Aumentar o espaçamento/altura natural por barra
     const dynamicHeight = Math.max(minHeight, dados.length * barHeight + 80);
     ctx.parentElement.style.height = dynamicHeight + 'px';
 
@@ -1635,8 +1635,14 @@ function renderTempoPorTags(tarefas) {
             datasets: [{
                 label: 'Tempo Médio (h)',
                 data: dados.map(d => d.tempoMedio),
-                backgroundColor: COLORS.violetPrimary,
-                barThickness: 25
+                backgroundColor: (context) => {
+                    return context.chart ? createGradient(context.chart.ctx, COLORS.violetPrimary, 'rgba(189, 95, 255, 0.2)') : COLORS.violetPrimary;
+                },
+                hoverBackgroundColor: COLORS.violetPrimary,
+                borderWidth: 0,
+                borderRadius: 4,
+                barPercentage: 0.6,
+                categoryPercentage: 0.8
             }]
         },
         options: {
@@ -1647,7 +1653,7 @@ function renderTempoPorTags(tarefas) {
                 tooltip: {
                     backgroundColor: theme.tooltipBg,
                     callbacks: {
-                        afterBody: function(items) {
+                        afterBody: function (items) {
                             const idx = items[0].dataIndex;
                             return [
                                 'Nº Tarefas: ' + dados[idx].numTarefas,
@@ -1745,7 +1751,7 @@ function renderTempoPorTipo(tarefas) {
                 tooltip: {
                     backgroundColor: theme.tooltipBg,
                     callbacks: {
-                        afterBody: function(items) {
+                        afterBody: function (items) {
                             const idx = items[0].dataIndex;
                             return [
                                 'Nº Tarefas: ' + dados[idx].numTarefas,
@@ -1828,7 +1834,7 @@ function renderTempoPorCliente(tarefas) {
                 tooltip: {
                     backgroundColor: theme.tooltipBg,
                     callbacks: {
-                        afterBody: function(items) {
+                        afterBody: function (items) {
                             const idx = items[0].dataIndex;
                             return [
                                 'Nº Tarefas: ' + dados[idx].numTarefas,
@@ -1875,9 +1881,9 @@ function renderEmptyStateTempoExecucao() {
 
     // Destruir charts existentes
     ['chart-distribuicao-tempo', 'chart-tempo-complexidade', 'chart-tempo-tags',
-     'chart-tempo-tipos', 'chart-tempo-clientes'].forEach(chartId => {
-        destroyChart(chartId);
-    });
+        'chart-tempo-tipos', 'chart-tempo-clientes'].forEach(chartId => {
+            destroyChart(chartId);
+        });
 }
 
 // Start Application

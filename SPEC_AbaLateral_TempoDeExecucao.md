@@ -108,9 +108,8 @@ Para manter consistência com a arquitetura SPA já implementada, a aba "Tempo d
 
         <!-- Tempo de Execução Por Tag -->
         <div class="chart-card glass-card span-12">
-            <div class="card-header">
+            <div class="card-header action-header">
                 <h3><i class="ri-price-tag-3-line"></i> Tempo de Execução Por Tag</h3>
-                <p class="card-subtitle">Top 10 tags por total de horas (ordenado por tempo médio)</p>
                 <button id="btn-expand-tags" class="btn-text">Mostrar Todas</button>
             </div>
             <div class="chart-body">
@@ -559,17 +558,32 @@ function renderTempoPorTags(tarefas) {
     // Ordenar por tempo médio descendente
     dados.sort((a, b) => b.tempoMedio - a.tempoMedio);
 
-    const ctx = document.getElementById('chart-tempo-tags').getContext('2d');
+    const ctx = document.getElementById('chart-tempo-tags');
+    if (!ctx) return;
+
+    // Ajustar altura do canvas dinamicamente baseado no número de tags
+    const minHeight = 400; // Aumentar altura mínima
+    const barHeight = 50; // Aumentar o espaçamento/altura natural por barra
+    const dynamicHeight = Math.max(minHeight, dados.length * barHeight + 80);
+    ctx.parentElement.style.height = dynamicHeight + 'px';
+
     destroyChart('chart-tempo-tags');
 
-    STATE.charts['chart-tempo-tags'] = new Chart(ctx, {
+    STATE.charts['chart-tempo-tags'] = new Chart(ctx.getContext('2d'), {
         type: 'bar',
         data: {
             labels: dados.map(d => d.tag),
             datasets: [{
                 label: 'Tempo Médio (h)',
                 data: dados.map(d => d.tempoMedio),
-                backgroundColor: COLORS.violetPrimary
+                backgroundColor: (context) => {
+                    return context.chart ? createGradient(context.chart.ctx, COLORS.violetPrimary, 'rgba(189, 95, 255, 0.2)') : COLORS.violetPrimary;
+                },
+                hoverBackgroundColor: COLORS.violetPrimary,
+                borderWidth: 0,
+                borderRadius: 4,
+                barPercentage: 0.6,
+                categoryPercentage: 0.8
             }]
         },
         options: {

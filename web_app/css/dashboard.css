@@ -568,6 +568,12 @@ input:checked+.slider::before {
     margin-bottom: var(--spacing-4);
 }
 
+.card-header.action-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
 .card-header h3 {
     font-size: 1rem;
     font-weight: 600;
