@@ -40,14 +40,42 @@ Esta seção processará um grande volume de dados aglomerados ("Agência") e ex
       - Exemplo lógico de triagem: Uma tarefa (ID) com X>Horas + Tipo=Y = "Alta Complexidade".
     - Representação consolidando os somatórios desses três perfis (`% Alta`, `% Média`, `% Baixa`).
 
-### 2.3. Bloco 3: Visão Específica (Drill-Down e Individualidade)
-A dinâmica principal introduzida: O conteúdo reagirá diretamente se for identificado apenas UM (ou um limite predeterminado) Perfil na seleção do array `activeFilters.perfil`.
+### 2.3. Bloco 3: Visão Específica (Análise Individual)
+A dinâmica principal introduzida: O conteúdo reagirá diretamente se for identificado o(s) Perfil(is) selecionado(s) no array `activeFilters.perfil`.
+
 - **Comportamentos (State Handling):**
-  - **Estado Vazio (Empty State):** Se o filtro "Perfis" estiver com 'Todos' selecionado (ou campo vazio simulado), a Div de `Visão Específica` recebe CSS class estática de *overlay de neblina* ou display *none* com texto "Selecione um Perfil Específico nos Filtros Acima".
-  - **Estado Ativado (Populated State):** Ao detectar seleção direta, dispara a renderização:
-    - *Mini-Perfil (Card Lateral):* `<h3 id="perfil-name-destaque">` preenchido com o nome capturado, exibindo total de horas isoladas exclusivas.
-    - *Eficiência de Prazos do Perfil:* Chart.js puro `type: 'doughnut'`. Proporcionaliza os "Sim/Não" do campo `Atraso` focado neste filtro restrito.
-    - *Time-Tracking de Clientes:* Chart.js tipo Radar ou Polar Area demonstrando em quais contas o Perfil consumiu mais horas de maneira esparsa.
+  - **Estado Vazio (Empty State):** Se o filtro "Perfis" estiver vazio/Todos, exibir aviso/overlay orientando a seleção de um Perfil.
+  - **Estado Ativado (Populated State):** Ao detectar seleção direta, disparar a renderização do bloco com as análises a seguir:
+
+- **1. Gráficos Mantidos (Sem Alteração de Lógica):**
+  - *Eficiência de Prazos:* `type: 'doughnut'` para o campo `Atraso`.
+  - *Time-Tracking de Clientes:* `type: 'bar'` ou similar, exibindo horas e consumo em contas.
+
+- **2. Produtividade e Eficiência (Tempos Médios):**
+  - Instanciar 3 gráficos de barras horizontais (`type: 'bar', indexAxis: 'y'`) exibindo barras agrupadas: Média do Perfil vs Média da Equipe.
+  - **Motor de Cálculo Diário:** 
+    - *Média Perfil:* Filtrar dataset pelo Perfil em questão agrupando por 'Tipo', 'Tag' e 'Complexidade'. Calcular `Total Horas / Total Itens` para chegar ao "Tempo Médio".
+    - *Média Equipe:* Filtrar dataset extraindo todos os colaboradores da mesma `Equipe` do Perfil foco. Calcular `Total Horas / Total Itens` agrupado pelos mesmos eixos, formando a baseline comparativa.
+  - Formatar Tooltips expondo: Nº de Itens, Total Horas, Tempo Médio Formatado.
+
+- **3. Especialização do Perfil:**
+  - Gráfico de Composição, sugerindo-se *Doughnut* ou *Bar (escala percentual)*.
+  - Manipulação de Array: Calcular frequencia das 'Tags' e realizar sort descendente (limitado ao Top 10). Mapear valor sobre Total Geral daquele perfil para obter %.
+  - Repetir lógica e instanciar um segundo gráfico lado-a-lado ou empilhado para 'Tipo de Tarefa' (limitado ao Top 3).
+
+- **4. Evolução no Tempo:**
+  - Instanciar gráfico Misto no Chart.js (`type: 'bar'` principal com 1 ou 2 `type: 'line'` datasets sobrepostos).
+  - **Regra de Agrupamento Dinâmico (Reduce):**
+    - Checar `activeFilters.mes`. Se o filtro de Mês estiver vazio/Todos, o `.reduce()` agrupa pelo mês de conclusão (ex: 'Janeiro/2026').
+    - Se houver `activeFilters.mes` específico, o `.reduce()` agrupa por Dia do mês.
+  - Plotar eixos separados/secundários (`yAxisID: 'y1', yAxisID: 'y2'`) visto que 'Horas', 'Itens' e 'Tarefas' operam em ordens de grandeza distintas no grid.
+
+- **5. Carga vs Capacidade:**
+  - **HTML Components / Cards:** Montar painel estático renderizando 3 KPIs principais e um comparativo de equipe com base numa meta de 120h/mês:
+    - *Horas Realizadas no Mês:* Total já calculado para esse perfil.
+    - *% Ocupação Estimada:* `(Horas Realizadas / 120) * 100`.
+    - *Diferença para Meta:* `120 - Horas Realizadas`.
+    - *Comparação de Equipe:* Média das horas realizadas pela equipe convertidas em % (Horas Medias Equipe / 120 * 100), exibido textualmente ou como linha de corte no UI.
 
 ## 3. Lógica de Atualização Condicional
 A função primária global de reatividade `updateDashboard()` deverá ser subdividida por causa da performance. Evitar que todas as dezenas de gráficos (Visão Geral + Perfil) sejam repintados a todo momento consumirá menos CPU do browser.

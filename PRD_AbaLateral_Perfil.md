@@ -49,14 +49,44 @@ Classificação baseada em regras de negócio (a serem detalhadas) para mensurar
 - **% Média Complexidade**
 - **% Alta Complexidade**
 
-### 2.3. Bloco 3: Visão Específica (Deep-dive do Colaborador)
-Este bloco ganhará destaque quando um ou mais perfis forem selecionados nos Filtros (ou através de um clique/drill-down vindo do Bloco Geral). Ele focará no desempenho cirúrgico e isolado.
-- **Painel do Perfil:** Nome/Cargo do Perfil em destaque.
-- **Indicadores Individuais de Eficiência:** 
-  - Total de horas do perfil, Quantidade de tarefas únicas (IDs).
-  - % de tarefas entregues com Atraso vs. No Prazo (Gráfico de Rosca/Doughnut).
-  - Proporção de 'Demandas' vs. 'Ajustes' realizados pelo colaborador.
-- **Alocação de Tempo:** Gráfico de barras ou teia evidenciando em quais *Clientes*, *Projetos* ou *Etapas* o colaborador consome mais tempo de vida útil da agência.
+### 2.3. Bloco 3: Visão Específica (Análise Individual)
+Este bloco ganhará destaque quando um ou mais perfis forem selecionados nos Filtros (ou através de um clique/drill-down vindo do Bloco Geral). Ele focará no desempenho detalhado e produtivo do perfil, mantendo as análises vitais e agregando novos eixos estratégicos.
+
+**1️⃣ Indicadores já existentes (Manter sem alteração):**
+- **Eficiência de Prazos:** % de tarefas entregues com Atraso vs. No Prazo (Gráfico de Rosca/Doughnut).
+- **Time-Tracking por Cliente:** Evolução e consumo de horas distribuídos por contas/clientes.
+
+**2️⃣ Produtividade e Eficiência (Tempos Médios)**
+Visa avaliar a velocidade de entrega comparativa. Serão visões separadas demonstrando o tempo médio gasto por:
+- **Tipo de Tarefa** (Ex: Demandas - 48 itens | 24 horas | 0:30 média)
+- **Tag** (Ex: cria - peça digital | 60 itens | 120 horas | 2:00 média)
+- **Complexidade** (Ex: Baixa Complexidade | 6 itens | 2 horas | 0:20 média)
+*Requisito em todos os gráficos:* Exibir a **comparação com a média da equipe** (benchmark) para visualizarmos claramente se os tempos do perfil são maiores ou menores que a média de seus pares. Serão sugeridos gráficos separados.
+
+**3️⃣ Especialização do Perfil**
+Responde à pergunta: "Esse perfil é especialista ou generalista?".
+- **Visual Sugerido:** Distribuição de composição em percentuais.
+- **Métricas:** Composição de atuação por **Tags (Top 10)** e **Tipos de Tarefa (Top 3)**.
+- Exemplo de leitura: 45% do esforço em 'Demanda', e Tags concentradas em 40% 'E-mail', 25% 'CRM'.
+
+**4️⃣ Evolução no Tempo (Análise Diária e Mensal)**
+Mostra a dinâmica temporal (crescimento, picos, sobrecarga e mudança de perfil de atuação), essencial para coordenação.
+- **Transição Automática:**
+  - Sem seleção de mês no filtro: exibe gráfico consolidado por **mês**.
+  - Com seleção de mês no filtro: exibe gráfico consolidado por **dia**.
+- **Métricas plotadas em conjunto:**
+  - Horas trabalhadas
+  - Nº de tarefas
+  - Nº de itens
+
+**5️⃣ Carga vs Capacidade**
+Contextualiza o esforço realizado visando um norte de entrega esperado.
+- **Meta base:** 120 horas de capacidade produtiva ideal por mês.
+- **Métricas Adicionadas:**
+  - Horas realizadas no mês
+  - % de ocupação estimada (Horas realizadas frente à meta)
+  - Diferença estrutural (Saldo para a meta)
+- *Requisito:* Adicionar paralelamente a **comparação da métrica deste perfil com a média da sua equipe.**
 
 ## 3. Dinâmica de Interação e Navegação
 - **Adição na Sidebar:** A barra lateral (sidebar) ganhará o novo botão "Perfil", posicionado abaixo do botão "Visão Geral". A navegação alternará o conteúdo central (SPA - Single Page Application) sem recarregar a página, mantendo os dados cacheados na memória.
