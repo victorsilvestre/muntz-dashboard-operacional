@@ -8,6 +8,9 @@ const STATE = {
     filteredData: [],
     charts: {},
     currentPage: 'visao-geral',
+    tempoExecucao: {
+        expandedTags: false
+    },
     filters: {
         urgente: false,
         atraso: false,
@@ -46,8 +49,10 @@ const UI = {
     // SPA Navbar & Pages
     navVisaoGeral: document.getElementById('nav-visao-geral'),
     navPerfil: document.getElementById('nav-perfil'),
+    navTempoExecucao: document.getElementById('nav-tempo-execucao'),
     pageVisaoGeral: document.getElementById('page-visao-geral'),
     pagePerfil: document.getElementById('page-perfil'),
+    pageTempoExecucao: document.getElementById('page-tempo-execucao'),
     // Page Perfil KPIs & Blocks
     kpiPerfil: {
         totalPerfis: document.getElementById('kpi-total-perfis'),
@@ -60,7 +65,17 @@ const UI = {
         mediaAtraso: document.getElementById('kpi-media-atraso')
     },
     blocoEspecifico: document.getElementById('bloco-especifico'),
-    perfilNameDestaque: document.getElementById('perfil-name-destaque')
+    perfilNameDestaque: document.getElementById('perfil-name-destaque'),
+    // Page Tempo de Execução
+    btnExpandTags: document.getElementById('btn-expand-tags'),
+    kpiTempoExecucao: {
+        totalTarefas: document.getElementById('kpi-total-tarefas-tempo'),
+        totalHoras: document.getElementById('kpi-total-horas-tempo'),
+        tempoMedio: document.getElementById('kpi-tempo-medio-geral'),
+        mediana: document.getElementById('kpi-mediana-tempo'),
+        tempoMin: document.getElementById('kpi-tempo-minimo'),
+        tempoMax: document.getElementById('kpi-tempo-maximo')
+    }
 };
 
 // Chart Setup defaults
@@ -226,6 +241,7 @@ function processData(rows) {
             cliente: (row['Cliente'] || '').trim(),
             tipo: (row['Tipo'] || '').trim(),
             tags: row['Tags'] ? row['Tags'].split(',').map(tag => tag.trim()) : [],
+            complexidade: (row['Complexidade'] || '').trim(),
             perfil: (row['Perfil'] || '').trim(),
             equipe: (row['Equipe'] || '').trim(),
             horas: parseFloat(strHoras) || 0,
@@ -332,25 +348,65 @@ function bindEvents() {
         UI.navVisaoGeral.addEventListener('click', (e) => {
             e.preventDefault();
             if (STATE.currentPage === 'visao-geral') return;
-            STATE.currentPage = 'visao-geral';
-            UI.navVisaoGeral.classList.add('active');
-            UI.navPerfil.classList.remove('active');
-            UI.pageVisaoGeral.classList.remove('hidden');
-            UI.pagePerfil.classList.add('hidden');
-            updateDashboard(); // Re-render for active tab
+            navigateToPage('visao-geral');
         });
 
         UI.navPerfil.addEventListener('click', (e) => {
             e.preventDefault();
             if (STATE.currentPage === 'perfil') return;
-            STATE.currentPage = 'perfil';
-            UI.navPerfil.classList.add('active');
-            UI.navVisaoGeral.classList.remove('active');
-            UI.pagePerfil.classList.remove('hidden');
-            UI.pageVisaoGeral.classList.add('hidden');
-            updateDashboard(); // Re-render for active tab
+            navigateToPage('perfil');
+        });
+
+        if (UI.navTempoExecucao) {
+            UI.navTempoExecucao.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (STATE.currentPage === 'tempo-execucao') return;
+                navigateToPage('tempo-execucao');
+            });
+        }
+    }
+
+    // Event Listener para botão de expansão de tags
+    if (UI.btnExpandTags) {
+        UI.btnExpandTags.addEventListener('click', () => {
+            STATE.tempoExecucao.expandedTags = !STATE.tempoExecucao.expandedTags;
+            renderTempoPorTags(calcularTemposPorTarefa(STATE.filteredData));
         });
     }
+}
+
+function navigateToPage(pageName) {
+    // Remover active de todos os nav-items
+    [UI.navVisaoGeral, UI.navPerfil, UI.navTempoExecucao].forEach(nav => {
+        if (nav) nav.classList.remove('active');
+    });
+
+    // Ocultar todas as páginas
+    [UI.pageVisaoGeral, UI.pagePerfil, UI.pageTempoExecucao].forEach(page => {
+        if (page) page.classList.add('hidden');
+    });
+
+    // Ativar página e nav-item corretos
+    STATE.currentPage = pageName;
+
+    const pageTitle = document.querySelector('.page-title h1');
+
+    if (pageName === 'visao-geral') {
+        UI.pageVisaoGeral.classList.remove('hidden');
+        UI.navVisaoGeral.classList.add('active');
+        if (pageTitle) pageTitle.textContent = 'Visão Geral da Operação';
+    } else if (pageName === 'perfil') {
+        UI.pagePerfil.classList.remove('hidden');
+        UI.navPerfil.classList.add('active');
+        if (pageTitle) pageTitle.textContent = 'Análise de Perfis';
+    } else if (pageName === 'tempo-execucao') {
+        UI.pageTempoExecucao.classList.remove('hidden');
+        UI.navTempoExecucao.classList.add('active');
+        if (pageTitle) pageTitle.textContent = 'Tempo de Execução';
+    }
+
+    // Re-renderizar apenas a página ativa
+    updateDashboard();
 }
 
 function applyFilters() {
@@ -382,6 +438,8 @@ function updateDashboard() {
 
     if (STATE.currentPage === 'perfil') {
         renderChartsParaPerfil(df);
+    } else if (STATE.currentPage === 'tempo-execucao') {
+        renderChartsTempoExecucao(df);
     } else {
         renderChartsVisaoGeral(df);
     }
@@ -1238,6 +1296,588 @@ function renderPerfilDrillDown(df) {
         }
     });
 
+}
+
+// ==========================================
+// 5. RENDER PAGE: TEMPO DE EXECUÇÃO
+// ==========================================
+
+/**
+ * Agrupa dados por tarefa (ID único) e calcula tempo total de cada tarefa
+ * @param {Array} data - Array de registros filtrados
+ * @returns {Array} Array de objetos {id, tempo, cliente, tipo, tags, complexidade}
+ */
+function calcularTemposPorTarefa(data) {
+    const tarefasMap = new Map();
+
+    data.forEach(row => {
+        const id = row.id;
+        const horas = row.horas || 0;
+
+        if (!tarefasMap.has(id)) {
+            tarefasMap.set(id, {
+                id: id,
+                tempo: 0,
+                cliente: row.cliente,
+                tipo: row.tipo,
+                tags: row.tags,
+                complexidade: row.complexidade || ''
+            });
+        }
+
+        tarefasMap.get(id).tempo += horas;
+    });
+
+    return Array.from(tarefasMap.values()).filter(t => t.tempo > 0);
+}
+
+/**
+ * Calcula a mediana de um array de números
+ * @param {Array} valores - Array de números
+ * @returns {number} Mediana
+ */
+function calcularMediana(valores) {
+    if (valores.length === 0) return 0;
+
+    const sorted = [...valores].sort((a, b) => a - b);
+    const meio = Math.floor(sorted.length / 2);
+
+    if (sorted.length % 2 === 0) {
+        return (sorted[meio - 1] + sorted[meio]) / 2;
+    } else {
+        return sorted[meio];
+    }
+}
+
+/**
+ * Formata tempo em horas para exibição (formato hh:mm)
+ * @param {number} horas - Valor em horas
+ * @returns {string} String formatada (ex: "2:30h")
+ */
+function formatarTempo(horas) {
+    if (horas === 0) return '0:00h';
+    if (horas < 0.01) return '<0:01h';
+
+    const horasInteiras = Math.floor(horas);
+    const minutos = Math.round((horas - horasInteiras) * 60);
+
+    // Ajuste para quando minutos = 60
+    if (minutos === 60) {
+        return `${horasInteiras + 1}:00h`;
+    }
+
+    return `${horasInteiras}:${minutos.toString().padStart(2, '0')}h`;
+}
+
+/**
+ * Destrói instância de chart existente para evitar sobreposição
+ * @param {string} chartId - ID do chart a ser destruído
+ */
+function destroyChart(chartId) {
+    if (STATE.charts[chartId]) {
+        STATE.charts[chartId].destroy();
+        delete STATE.charts[chartId];
+    }
+}
+
+/**
+ * Renderiza todos os gráficos e KPIs da página Tempo de Execução
+ * @param {Array} data - Dados filtrados
+ */
+function renderChartsTempoExecucao(data) {
+    if (!data || data.length === 0) {
+        renderEmptyStateTempoExecucao();
+        return;
+    }
+
+    // Calcular tempos por tarefa
+    const tarefas = calcularTemposPorTarefa(data);
+    const tempos = tarefas.map(t => t.tempo);
+
+    // Renderizar KPIs
+    renderKPIsTempoExecucao(tarefas, tempos);
+
+    // Renderizar Gráficos
+    renderDistribuicaoTempo(tarefas);
+    renderTempoPorComplexidade(tarefas);
+    renderTempoPorTags(tarefas);
+    renderTempoPorTipo(tarefas);
+    renderTempoPorCliente(tarefas);
+}
+
+function renderKPIsTempoExecucao(tarefas, tempos) {
+    const totalTarefas = tarefas.length;
+    const totalHoras = tarefas.reduce((sum, t) => sum + t.tempo, 0);
+    const tempoMedio = totalTarefas > 0 ? totalHoras / totalTarefas : 0;
+    const mediana = calcularMediana(tempos);
+    const tempoMin = tempos.length > 0 ? Math.min(...tempos) : 0;
+    const tempoMax = tempos.length > 0 ? Math.max(...tempos) : 0;
+
+    if (UI.kpiTempoExecucao.totalTarefas) UI.kpiTempoExecucao.totalTarefas.textContent = totalTarefas.toLocaleString('pt-BR');
+    if (UI.kpiTempoExecucao.totalHoras) UI.kpiTempoExecucao.totalHoras.textContent = formatarTempo(totalHoras);
+    if (UI.kpiTempoExecucao.tempoMedio) UI.kpiTempoExecucao.tempoMedio.textContent = formatarTempo(tempoMedio);
+    if (UI.kpiTempoExecucao.mediana) UI.kpiTempoExecucao.mediana.textContent = formatarTempo(mediana);
+    if (UI.kpiTempoExecucao.tempoMin) UI.kpiTempoExecucao.tempoMin.textContent = formatarTempo(tempoMin);
+    if (UI.kpiTempoExecucao.tempoMax) UI.kpiTempoExecucao.tempoMax.textContent = formatarTempo(tempoMax);
+}
+
+function renderDistribuicaoTempo(tarefas) {
+    const faixas = [
+        { label: '0-1h', min: 0, max: 1 },
+        { label: '1-2h', min: 1, max: 2 },
+        { label: '2-4h', min: 2, max: 4 },
+        { label: '4-8h', min: 4, max: 8 },
+        { label: '8h+', min: 8, max: Infinity }
+    ];
+
+    const distribuicao = faixas.map(faixa => {
+        const count = tarefas.filter(t => t.tempo >= faixa.min && t.tempo < faixa.max).length;
+        const percent = tarefas.length > 0 ? (count / tarefas.length * 100).toFixed(1) : 0;
+        return { label: faixa.label, count, percent };
+    });
+
+    const ctx = document.getElementById('chart-distribuicao-tempo');
+    if (!ctx) return;
+
+    destroyChart('chart-distribuicao-tempo');
+    const theme = getChartTheme();
+
+    STATE.charts['chart-distribuicao-tempo'] = new Chart(ctx.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: distribuicao.map(d => d.label),
+            datasets: [{
+                label: 'Nº de Tarefas',
+                data: distribuicao.map(d => d.count),
+                backgroundColor: COLORS.violetPrimary,
+                borderColor: COLORS.violetDark,
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: theme.tooltipBg,
+                    callbacks: {
+                        afterLabel: function(context) {
+                            return distribuicao[context.dataIndex].percent + '% do total';
+                        }
+                    }
+                },
+                datalabels: {
+                    display: true,
+                    anchor: 'end',
+                    align: 'top',
+                    color: theme.datalabels,
+                    font: {
+                        size: 11,
+                        weight: 'bold'
+                    },
+                    formatter: (val, ctx) => {
+                        return val + ' (' + distribuicao[ctx.dataIndex].percent + '%)';
+                    }
+                }
+            },
+            layout: {
+                padding: {
+                    top: 30
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Quantidade de Tarefas', color: theme.text },
+                    ticks: { color: theme.text },
+                    grid: { color: theme.grid }
+                },
+                x: {
+                    title: { display: true, text: 'Faixa de Tempo', color: theme.text },
+                    ticks: { color: theme.text },
+                    grid: { color: theme.grid }
+                }
+            }
+        }
+    });
+}
+
+function renderTempoPorComplexidade(tarefas) {
+    const complexidades = ['Baixa', 'Média', 'Alta'];
+
+    const dados = complexidades.map(comp => {
+        const tarefasComp = tarefas.filter(t => t.complexidade === comp);
+        const tempos = tarefasComp.map(t => t.tempo);
+        const totalHoras = tarefasComp.reduce((sum, t) => sum + t.tempo, 0);
+        const tempoMedio = tarefasComp.length > 0 ? totalHoras / tarefasComp.length : 0;
+        const mediana = calcularMediana(tempos);
+
+        return {
+            complexidade: comp,
+            numTarefas: tarefasComp.length,
+            totalHoras,
+            tempoMedio,
+            mediana
+        };
+    });
+
+    const ctx = document.getElementById('chart-tempo-complexidade');
+    if (!ctx) return;
+
+    destroyChart('chart-tempo-complexidade');
+    const theme = getChartTheme();
+
+    STATE.charts['chart-tempo-complexidade'] = new Chart(ctx.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: dados.map(d => d.complexidade),
+            datasets: [
+                {
+                    label: 'Tempo Médio (h)',
+                    data: dados.map(d => d.tempoMedio),
+                    backgroundColor: COLORS.violetPrimary,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Mediana (h)',
+                    data: dados.map(d => d.mediana),
+                    backgroundColor: COLORS.vivaz,
+                    yAxisID: 'y'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                tooltip: {
+                    backgroundColor: theme.tooltipBg,
+                    callbacks: {
+                        afterBody: function(items) {
+                            const idx = items[0].dataIndex;
+                            return [
+                                'Nº Tarefas: ' + dados[idx].numTarefas,
+                                'Total Horas: ' + formatarTempo(dados[idx].totalHoras)
+                            ];
+                        }
+                    }
+                },
+                datalabels: {
+                    display: true,
+                    anchor: 'end',
+                    align: 'top',
+                    color: theme.datalabels,
+                    formatter: (val) => val > 0 ? formatarTempo(val) : ''
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Horas', color: theme.text },
+                    ticks: { color: theme.text },
+                    grid: { color: theme.grid }
+                },
+                x: {
+                    ticks: { color: theme.text },
+                    grid: { color: theme.grid }
+                }
+            }
+        }
+    });
+}
+
+function renderTempoPorTags(tarefas) {
+    const tagsMap = new Map();
+
+    tarefas.forEach(t => {
+        const tags = Array.isArray(t.tags) ? t.tags : (t.tags || '').split(',').map(tag => tag.trim()).filter(tag => tag);
+        tags.forEach(tag => {
+            if (!tagsMap.has(tag)) {
+                tagsMap.set(tag, { tag, tarefas: [], totalHoras: 0 });
+            }
+            tagsMap.get(tag).tarefas.push(t.tempo);
+            tagsMap.get(tag).totalHoras += t.tempo;
+        });
+    });
+
+    let dados = Array.from(tagsMap.values())
+        .filter(d => d.totalHoras > 0)
+        .map(d => ({
+            tag: d.tag,
+            numTarefas: d.tarefas.length,
+            totalHoras: d.totalHoras,
+            tempoMedio: d.totalHoras / d.tarefas.length,
+            mediana: calcularMediana(d.tarefas)
+        }))
+        .sort((a, b) => b.numTarefas - a.numTarefas); // Ordenar por quantidade de tarefas
+
+    // Limitar a 10 tags se não expandido
+    const limit = STATE.tempoExecucao.expandedTags ? dados.length : 10;
+    dados = dados.slice(0, limit);
+
+    const ctx = document.getElementById('chart-tempo-tags');
+    if (!ctx) return;
+
+    // Ajustar altura do canvas dinamicamente baseado no número de tags
+    const minHeight = 300;
+    const barHeight = 35; // Altura por barra incluindo espaçamento
+    const dynamicHeight = Math.max(minHeight, dados.length * barHeight + 80);
+    ctx.parentElement.style.height = dynamicHeight + 'px';
+
+    destroyChart('chart-tempo-tags');
+    const theme = getChartTheme();
+
+    STATE.charts['chart-tempo-tags'] = new Chart(ctx.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: dados.map(d => d.tag),
+            datasets: [{
+                label: 'Tempo Médio (h)',
+                data: dados.map(d => d.tempoMedio),
+                backgroundColor: COLORS.violetPrimary,
+                barThickness: 25
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                tooltip: {
+                    backgroundColor: theme.tooltipBg,
+                    callbacks: {
+                        afterBody: function(items) {
+                            const idx = items[0].dataIndex;
+                            return [
+                                'Nº Tarefas: ' + dados[idx].numTarefas,
+                                'Total Horas: ' + formatarTempo(dados[idx].totalHoras),
+                                'Mediana: ' + formatarTempo(dados[idx].mediana)
+                            ];
+                        }
+                    }
+                },
+                datalabels: {
+                    display: true,
+                    anchor: 'end',
+                    align: 'end',
+                    color: theme.datalabels,
+                    font: {
+                        size: 11,
+                        weight: 'bold'
+                    },
+                    formatter: (val) => val > 0 ? formatarTempo(val) : ''
+                }
+            },
+            layout: {
+                padding: { right: 80 }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Tempo Médio', color: theme.text },
+                    ticks: { color: theme.text },
+                    grid: { color: theme.grid }
+                },
+                y: {
+                    ticks: {
+                        color: theme.text,
+                        autoSkip: false,
+                        font: {
+                            size: 11
+                        }
+                    },
+                    grid: { color: theme.grid }
+                }
+            }
+        }
+    });
+
+    // Atualizar botão de expansão
+    if (UI.btnExpandTags) {
+        UI.btnExpandTags.textContent = STATE.tempoExecucao.expandedTags ? 'Mostrar Menos' : 'Mostrar Todas';
+    }
+}
+
+function renderTempoPorTipo(tarefas) {
+    const tiposMap = new Map();
+
+    tarefas.forEach(t => {
+        const tipo = t.tipo || 'Sem tipo';
+        if (!tiposMap.has(tipo)) {
+            tiposMap.set(tipo, { tipo, tarefas: [], totalHoras: 0 });
+        }
+        tiposMap.get(tipo).tarefas.push(t.tempo);
+        tiposMap.get(tipo).totalHoras += t.tempo;
+    });
+
+    const dados = Array.from(tiposMap.values())
+        .map(d => ({
+            tipo: d.tipo,
+            numTarefas: d.tarefas.length,
+            totalHoras: d.totalHoras,
+            tempoMedio: d.totalHoras / d.tarefas.length,
+            mediana: calcularMediana(d.tarefas)
+        }))
+        .sort((a, b) => b.tempoMedio - a.tempoMedio);
+
+    const ctx = document.getElementById('chart-tempo-tipos');
+    if (!ctx) return;
+
+    destroyChart('chart-tempo-tipos');
+    const theme = getChartTheme();
+
+    STATE.charts['chart-tempo-tipos'] = new Chart(ctx.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: dados.map(d => d.tipo),
+            datasets: [{
+                label: 'Tempo Médio (h)',
+                data: dados.map(d => d.tempoMedio),
+                backgroundColor: COLORS.violetPrimary
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                tooltip: {
+                    backgroundColor: theme.tooltipBg,
+                    callbacks: {
+                        afterBody: function(items) {
+                            const idx = items[0].dataIndex;
+                            return [
+                                'Nº Tarefas: ' + dados[idx].numTarefas,
+                                'Total Horas: ' + formatarTempo(dados[idx].totalHoras),
+                                'Mediana: ' + formatarTempo(dados[idx].mediana)
+                            ];
+                        }
+                    }
+                },
+                datalabels: {
+                    display: true,
+                    anchor: 'end',
+                    align: 'end',
+                    color: theme.datalabels,
+                    formatter: (val) => val > 0 ? formatarTempo(val) : ''
+                }
+            },
+            layout: {
+                padding: { right: 60 }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Tempo Médio (horas)', color: theme.text },
+                    ticks: { color: theme.text },
+                    grid: { color: theme.grid }
+                },
+                y: {
+                    ticks: { color: theme.text },
+                    grid: { color: theme.grid }
+                }
+            }
+        }
+    });
+}
+
+function renderTempoPorCliente(tarefas) {
+    const clientesMap = new Map();
+
+    tarefas.forEach(t => {
+        const cliente = t.cliente || 'Sem cliente';
+        if (!clientesMap.has(cliente)) {
+            clientesMap.set(cliente, { cliente, tarefas: [], totalHoras: 0 });
+        }
+        clientesMap.get(cliente).tarefas.push(t.tempo);
+        clientesMap.get(cliente).totalHoras += t.tempo;
+    });
+
+    const dados = Array.from(clientesMap.values())
+        .map(d => ({
+            cliente: d.cliente,
+            numTarefas: d.tarefas.length,
+            totalHoras: d.totalHoras,
+            tempoMedio: d.totalHoras / d.tarefas.length,
+            mediana: calcularMediana(d.tarefas)
+        }))
+        .sort((a, b) => b.tempoMedio - a.tempoMedio);
+
+    const ctx = document.getElementById('chart-tempo-clientes');
+    if (!ctx) return;
+
+    destroyChart('chart-tempo-clientes');
+    const theme = getChartTheme();
+
+    STATE.charts['chart-tempo-clientes'] = new Chart(ctx.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: dados.map(d => d.cliente),
+            datasets: [{
+                label: 'Tempo Médio (h)',
+                data: dados.map(d => d.tempoMedio),
+                backgroundColor: COLORS.violetPrimary
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                tooltip: {
+                    backgroundColor: theme.tooltipBg,
+                    callbacks: {
+                        afterBody: function(items) {
+                            const idx = items[0].dataIndex;
+                            return [
+                                'Nº Tarefas: ' + dados[idx].numTarefas,
+                                'Total Horas: ' + formatarTempo(dados[idx].totalHoras),
+                                'Mediana: ' + formatarTempo(dados[idx].mediana)
+                            ];
+                        }
+                    }
+                },
+                datalabels: {
+                    display: true,
+                    anchor: 'end',
+                    align: 'end',
+                    color: theme.datalabels,
+                    formatter: (val) => val > 0 ? formatarTempo(val) : ''
+                }
+            },
+            layout: {
+                padding: { right: 60 }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Tempo Médio (horas)', color: theme.text },
+                    ticks: { color: theme.text },
+                    grid: { color: theme.grid }
+                },
+                y: {
+                    ticks: { color: theme.text },
+                    grid: { color: theme.grid }
+                }
+            }
+        }
+    });
+}
+
+function renderEmptyStateTempoExecucao() {
+    // Limpar KPIs
+    if (UI.kpiTempoExecucao) {
+        Object.values(UI.kpiTempoExecucao).forEach(el => {
+            if (el) el.textContent = '0';
+        });
+    }
+
+    // Destruir charts existentes
+    ['chart-distribuicao-tempo', 'chart-tempo-complexidade', 'chart-tempo-tags',
+     'chart-tempo-tipos', 'chart-tempo-clientes'].forEach(chartId => {
+        destroyChart(chartId);
+    });
 }
 
 // Start Application
