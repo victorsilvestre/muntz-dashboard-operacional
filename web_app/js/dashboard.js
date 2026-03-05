@@ -2020,7 +2020,7 @@ function renderMikeSimpleTable(tbodyId, theadId, sortedData, col1Name) {
     if (!thead || !tbody) return;
 
     thead.innerHTML = `
-        <tr style="border-bottom: 2px solid var(--color-montanha);">
+        <tr style="border-bottom: 2px solid var(--border-color);">
             <th style="padding: 12px; color: var(--color-base);">${col1Name}</th>
             <th style="padding: 12px; color: var(--color-base);">Total de Horas</th>
         </tr>
@@ -2032,7 +2032,7 @@ function renderMikeSimpleTable(tbodyId, theadId, sortedData, col1Name) {
 
     sortedData.forEach(d => {
         const tr = document.createElement('tr');
-        tr.style.borderBottom = '1px solid var(--color-montanha)';
+        tr.style.borderBottom = '1px solid var(--border-color)';
 
         const perc = totalGlobal > 0 ? (d[1] / totalGlobal) * 100 : 0;
 
@@ -2060,7 +2060,7 @@ function renderMikePivotTable(tbodyId, theadId, pivotData, col1Name) {
     const yLabels = pivotData.yLabels;
 
     // Header
-    let trHead = '<tr style="border-bottom: 2px solid var(--color-montanha);">';
+    let trHead = '<tr style="border-bottom: 2px solid var(--border-color);">';
     trHead += `<th style="padding: 12px; color: var(--color-base);">${col1Name}</th>`;
     subLabels.forEach(sub => {
         trHead += `<th style="padding: 12px; color: var(--color-base); text-align: center;">${sub}</th>`;
@@ -2074,7 +2074,7 @@ function renderMikePivotTable(tbodyId, theadId, pivotData, col1Name) {
     // Data rows
     yLabels.forEach(y => {
         const tr = document.createElement('tr');
-        tr.style.borderBottom = '1px solid var(--color-montanha)';
+        tr.style.borderBottom = '1px solid var(--border-color)';
 
         let trContent = `<td style="padding: 12px; font-weight: 500;">${y}</td>`;
 
@@ -2180,7 +2180,7 @@ function renderMikeTable(df) {
 
     dados.forEach(d => {
         const tr = document.createElement('tr');
-        tr.style.borderBottom = '1px solid var(--color-montanha)';
+        tr.style.borderBottom = '1px solid var(--border-color)';
 
         // Percent Progress Background via cell
         const tdPerc = document.createElement('td');
@@ -2204,7 +2204,7 @@ function renderMikeTable(df) {
 
     // Row: Total
     const trTotal = document.createElement('tr');
-    trTotal.style.borderTop = '2px solid var(--color-montanha)';
+    trTotal.style.borderTop = '2px solid var(--border-color)';
     trTotal.style.fontWeight = 'bold';
     trTotal.style.background = 'rgba(0,0,0,0.02)';
 
