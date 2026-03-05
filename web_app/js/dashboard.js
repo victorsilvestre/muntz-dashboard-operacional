@@ -1953,15 +1953,23 @@ function renderChartsMike(df) {
     renderMikeSimpleTable('tbody-mike-clientes', 'thead-mike-clientes', agClientes, 'Clientes');
 
     // 2. Equipe x Clientes
-    const pivotEquipes = pivotAggregatorMike(df, item => item.cliente || '(Vazios)', item => item.equipe || '(Vazios)');
-    renderMikePivotTable('tbody-mike-equipes', 'thead-mike-equipes', pivotEquipes, 'Clientes');
+    const dfEquipes = df.filter(item => {
+        const eq = (item.equipe || '').trim().toLowerCase();
+        return eq !== 'gestão' && eq !== 'gestao';
+    });
+    const pivotEquipes = pivotAggregatorMike(dfEquipes, item => item.equipe || '(Vazios)', item => item.cliente || '(Vazios)');
+    renderMikePivotTable('tbody-mike-equipes', 'thead-mike-equipes', pivotEquipes, 'Equipes');
 
     // 3. Cargos x Clientes
     const pivotCargos = pivotAggregatorMike(df, item => item.cargo || '(Vazios)', item => item.cliente || '(Vazios)');
     renderMikePivotTable('tbody-mike-cargos', 'thead-mike-cargos', pivotCargos, 'Cargos');
 
     // 4. Perfis x Clientes
-    const pivotPerfis = pivotAggregatorMike(df, item => item.perfil || '(Vazios)', item => item.cliente || '(Vazios)');
+    const dfPerfis = df.filter(item => {
+        const pf = (item.perfil || '').trim().toLowerCase();
+        return pf !== 'victor silvestre';
+    });
+    const pivotPerfis = pivotAggregatorMike(dfPerfis, item => item.perfil || '(Vazios)', item => item.cliente || '(Vazios)');
     renderMikePivotTable('tbody-mike-perfis', 'thead-mike-perfis', pivotPerfis, 'Perfis');
 
     // 5. Tags x Clientes
@@ -2117,17 +2125,29 @@ function renderMikeTable(df) {
     if (!tableBody) return;
 
     const acc = {};
+    const tarefasVistasPorTag = new Set();
     let sumTotalGlobal = 0;
 
     df.forEach(item => {
-        let tagsArr = (item.tags && item.tags.length > 0) ? item.tags : ['Sem especialidade'];
+        let tagsArr = (item.tags && item.tags.length > 0) ? item.tags : ['(Vazio)'];
         tagsArr.forEach(tag => {
             const t = tag.trim();
             if (!t) return;
             if (!acc[t]) acc[t] = { tag: t, horas: 0, quantidade: 0 };
 
             acc[t].horas += item.horas;
-            acc[t].quantidade += (item.quantidade || 0);
+
+            // Soma a quantidade de itens apenas UMA vez por Tarefa (ID) + Tag
+            const targetId = item.id ? String(item.id).trim() : '';
+            const idTagCombo = `${targetId}-${t}`;
+
+            if (targetId && !tarefasVistasPorTag.has(idTagCombo)) {
+                acc[t].quantidade += (item.quantidade || 0);
+                tarefasVistasPorTag.add(idTagCombo);
+            } else if (!targetId) {
+                // Caso não tenha ID cadastrado, joga o valor sem filtrar
+                acc[t].quantidade += (item.quantidade || 0);
+            }
         });
 
         sumTotalGlobal += item.horas;
@@ -2147,12 +2167,16 @@ function renderMikeTable(df) {
     dados.sort((a, b) => {
         if (col === 'tag') {
             return a.tag.localeCompare(b.tag) * dir;
+        } else if (col === 'qtd') {
+            return (a.quantidade - b.quantidade) * dir;
         } else {
             return (a[col] - b[col]) * dir;
         }
     });
 
     tableBody.innerHTML = '';
+
+    let totalQuantidadeGlobal = 0;
 
     dados.forEach(d => {
         const tr = document.createElement('tr');
@@ -2174,6 +2198,25 @@ function renderMikeTable(df) {
 
         tr.appendChild(tdPerc);
         tableBody.appendChild(tr);
+
+        totalQuantidadeGlobal += d.quantidade;
     });
+
+    // Row: Total
+    const trTotal = document.createElement('tr');
+    trTotal.style.borderTop = '2px solid var(--color-montanha)';
+    trTotal.style.fontWeight = 'bold';
+    trTotal.style.background = 'rgba(0,0,0,0.02)';
+
+    let mediaGlobal = totalQuantidadeGlobal > 0 ? (sumTotalGlobal / totalQuantidadeGlobal) : sumTotalGlobal;
+
+    trTotal.innerHTML = `
+        <td style="padding: 12px; color: var(--color-base);">TOTAL GERAL</td>
+        <td style="padding: 12px; color: var(--color-violet-primary);">${decimalToTimeMike(sumTotalGlobal)}</td>
+        <td style="padding: 12px; color: var(--color-base);">${totalQuantidadeGlobal.toLocaleString('pt-BR')}</td>
+        <td style="padding: 12px; color: var(--color-base);">${decimalToTimeMike(mediaGlobal)}</td>
+        <td style="padding: 12px; color: var(--color-violet-primary);">100.0%</td>
+    `;
+    tableBody.appendChild(trTotal);
 }
 
