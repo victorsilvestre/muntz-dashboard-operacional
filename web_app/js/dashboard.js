@@ -11,6 +11,10 @@ const STATE = {
     tempoExecucao: {
         expandedTags: false
     },
+    mike: {
+        tableSortColumn: 'perc',
+        tableSortDir: 'desc'
+    },
     filters: {
         urgente: false,
         atraso: false,
@@ -50,9 +54,11 @@ const UI = {
     navVisaoGeral: document.getElementById('nav-visao-geral'),
     navPerfil: document.getElementById('nav-perfil'),
     navTempoExecucao: document.getElementById('nav-tempo-execucao'),
+    navMike: document.getElementById('nav-mike'),
     pageVisaoGeral: document.getElementById('page-visao-geral'),
     pagePerfil: document.getElementById('page-perfil'),
     pageTempoExecucao: document.getElementById('page-tempo-execucao'),
+    pageMike: document.getElementById('page-mike'),
     // Page Perfil KPIs & Blocks
     kpiPerfil: {
         totalPerfis: document.getElementById('kpi-total-perfis'),
@@ -188,8 +194,8 @@ async function initDashboard() {
     try {
         initTheme(); // Executa rotina de visual logo no início
 
-        // We assume index.html is in web_app/ and csv is one level up
-        const targetCsvUrl = '../relatorio_completo_jan_fev_2026_030326.csv';
+        // We assume index.html is in web_app/ and csv is in data/
+        const targetCsvUrl = 'data/relatorio_completo_jan_fev_2026_030326.csv';
 
         Papa.parse(targetCsvUrl, {
             download: true,
@@ -242,6 +248,7 @@ function processData(rows) {
             tipo: (row['Tipo'] || '').trim(),
             tags: row['Tags'] ? row['Tags'].split(',').map(tag => tag.trim()) : [],
             complexidade: (row['Complexidade'] || '').trim(),
+            cargo: (row['Cargo'] || '').trim(),
             perfil: (row['Perfil'] || '').trim(),
             equipe: (row['Equipe'] || '').trim(),
             horas: parseFloat(strHoras) || 0,
@@ -373,16 +380,55 @@ function bindEvents() {
             renderTempoPorTags(calcularTemposPorTarefa(STATE.filteredData));
         });
     }
+
+    if (UI.navMike) {
+        UI.navMike.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (STATE.currentPage === 'mike') return;
+            navigateToPage('mike');
+        });
+    }
+
+    // Mike Table Sort Events
+    const mikeHeaders = document.querySelectorAll('.mike-table th[data-sort]');
+    mikeHeaders.forEach(th => {
+        th.addEventListener('click', () => {
+            const col = th.getAttribute('data-sort');
+            if (STATE.mike.tableSortColumn === col) {
+                STATE.mike.tableSortDir = STATE.mike.tableSortDir === 'asc' ? 'desc' : 'asc';
+            } else {
+                STATE.mike.tableSortColumn = col;
+                STATE.mike.tableSortDir = 'desc';
+            }
+            updateMikeTableHeaders();
+            renderMikeTable(STATE.filteredData);
+        });
+    });
+}
+
+function updateMikeTableHeaders() {
+    const headers = document.querySelectorAll('.mike-table th[data-sort]');
+    headers.forEach(th => {
+        const icon = th.querySelector('i');
+        const col = th.getAttribute('data-sort');
+        if (col === STATE.mike.tableSortColumn) {
+            icon.className = STATE.mike.tableSortDir === 'asc' ? 'ri-arrow-up-line' : 'ri-arrow-down-line';
+            icon.style.color = 'var(--color-violet-primary)';
+        } else {
+            icon.className = 'ri-arrow-up-down-line';
+            icon.style.color = 'var(--color-text-main)';
+        }
+    });
 }
 
 function navigateToPage(pageName) {
     // Remover active de todos os nav-items
-    [UI.navVisaoGeral, UI.navPerfil, UI.navTempoExecucao].forEach(nav => {
+    [UI.navVisaoGeral, UI.navPerfil, UI.navTempoExecucao, UI.navMike].forEach(nav => {
         if (nav) nav.classList.remove('active');
     });
 
     // Ocultar todas as páginas
-    [UI.pageVisaoGeral, UI.pagePerfil, UI.pageTempoExecucao].forEach(page => {
+    [UI.pageVisaoGeral, UI.pagePerfil, UI.pageTempoExecucao, UI.pageMike].forEach(page => {
         if (page) page.classList.add('hidden');
     });
 
@@ -403,6 +449,10 @@ function navigateToPage(pageName) {
         UI.pageTempoExecucao.classList.remove('hidden');
         UI.navTempoExecucao.classList.add('active');
         if (pageTitle) pageTitle.textContent = 'Tempo de Execução';
+    } else if (pageName === 'mike') {
+        UI.pageMike.classList.remove('hidden');
+        UI.navMike.classList.add('active');
+        if (pageTitle) pageTitle.textContent = 'Análise Cruzada (Mike)';
     }
 
     // Re-renderizar apenas a página ativa
@@ -440,6 +490,8 @@ function updateDashboard() {
         renderChartsParaPerfil(df);
     } else if (STATE.currentPage === 'tempo-execucao') {
         renderChartsTempoExecucao(df);
+    } else if (STATE.currentPage === 'mike') {
+        renderChartsMike(df);
     } else {
         renderChartsVisaoGeral(df);
     }
@@ -1888,3 +1940,240 @@ function renderEmptyStateTempoExecucao() {
 
 // Start Application
 document.addEventListener('DOMContentLoaded', initDashboard);
+
+// ==========================================
+// 5. RENDER PAGE: MIKE
+// ==========================================
+
+function renderChartsMike(df) {
+    if (df.length === 0) return;
+
+    // 1. Horas por Cliente
+    const agClientes = dataAggregator(df, item => item.cliente || '(Vazios)', 9999);
+    renderMikeSimpleTable('tbody-mike-clientes', 'thead-mike-clientes', agClientes, 'Clientes');
+
+    // 2. Equipe x Clientes
+    const pivotEquipes = pivotAggregatorMike(df, item => item.cliente || '(Vazios)', item => item.equipe || '(Vazios)');
+    renderMikePivotTable('tbody-mike-equipes', 'thead-mike-equipes', pivotEquipes, 'Clientes');
+
+    // 3. Cargos x Clientes
+    const pivotCargos = pivotAggregatorMike(df, item => item.cargo || '(Vazios)', item => item.cliente || '(Vazios)');
+    renderMikePivotTable('tbody-mike-cargos', 'thead-mike-cargos', pivotCargos, 'Cargos');
+
+    // 4. Perfis x Clientes
+    const pivotPerfis = pivotAggregatorMike(df, item => item.perfil || '(Vazios)', item => item.cliente || '(Vazios)');
+    renderMikePivotTable('tbody-mike-perfis', 'thead-mike-perfis', pivotPerfis, 'Perfis');
+
+    // 5. Tags x Clientes
+    const pivotTags = pivotAggregatorMike(df, item => {
+        return (item.tags && item.tags.length > 0) ? item.tags.filter(t => t.trim() !== '') : ['(Vazios)'];
+    }, item => item.cliente || '(Vazios)');
+    renderMikePivotTable('tbody-mike-pivot-tags', 'thead-mike-pivot-tags', pivotTags, 'Tags');
+
+    // Render Table
+    renderMikeTable(df);
+}
+
+function pivotAggregatorMike(df, mainKeyFn, subKeyFn) {
+    const yAxisLabelsSet = new Set();
+    const subSeriesLabelsSet = new Set();
+    const dataMatrix = {};
+
+    df.forEach(item => {
+        let yArr = mainKeyFn(item);
+        if (!Array.isArray(yArr)) yArr = [yArr];
+
+        let subArr = subKeyFn(item);
+        if (!Array.isArray(subArr)) subArr = [subArr];
+
+        yArr.forEach(yKey => {
+            if (!yKey) return;
+            yAxisLabelsSet.add(yKey);
+            if (!dataMatrix[yKey]) dataMatrix[yKey] = {};
+
+            subArr.forEach(subKey => {
+                if (!subKey) return;
+                subSeriesLabelsSet.add(subKey);
+                if (!dataMatrix[yKey][subKey]) dataMatrix[yKey][subKey] = 0;
+                dataMatrix[yKey][subKey] += item.horas;
+            });
+        });
+    });
+
+    const yLabels = Array.from(yAxisLabelsSet).sort((a, b) => a.localeCompare(b));
+    const subLabels = Array.from(subSeriesLabelsSet).sort((a, b) => a.localeCompare(b));
+
+    return { yLabels, subLabels, dataMatrix };
+}
+
+function renderMikeSimpleTable(tbodyId, theadId, sortedData, col1Name) {
+    const thead = document.getElementById(theadId);
+    const tbody = document.getElementById(tbodyId);
+    if (!thead || !tbody) return;
+
+    thead.innerHTML = `
+        <tr style="border-bottom: 2px solid var(--color-montanha);">
+            <th style="padding: 12px; color: var(--color-base);">${col1Name}</th>
+            <th style="padding: 12px; color: var(--color-base);">Total de Horas</th>
+        </tr>
+    `;
+
+    tbody.innerHTML = '';
+    let totalGlobal = 0;
+    sortedData.forEach(d => totalGlobal += d[1]);
+
+    sortedData.forEach(d => {
+        const tr = document.createElement('tr');
+        tr.style.borderBottom = '1px solid var(--color-montanha)';
+
+        const perc = totalGlobal > 0 ? (d[1] / totalGlobal) * 100 : 0;
+
+        const tdPerc = document.createElement('td');
+        tdPerc.style.padding = '12px';
+        tdPerc.style.fontWeight = '500';
+        tdPerc.style.color = 'var(--color-base)';
+        tdPerc.style.background = `linear-gradient(to right, rgba(189,95,255,0.15) ${perc}%, transparent ${perc}%)`;
+        tdPerc.innerText = decimalToTimeMike(d[1]);
+
+        tr.innerHTML = `
+            <td style="padding: 12px;">${d[0]}</td>
+        `;
+        tr.appendChild(tdPerc);
+        tbody.appendChild(tr);
+    });
+}
+
+function renderMikePivotTable(tbodyId, theadId, pivotData, col1Name) {
+    const thead = document.getElementById(theadId);
+    const tbody = document.getElementById(tbodyId);
+    if (!thead || !tbody) return;
+
+    const subLabels = pivotData.subLabels;
+    const yLabels = pivotData.yLabels;
+
+    // Header
+    let trHead = '<tr style="border-bottom: 2px solid var(--color-montanha);">';
+    trHead += `<th style="padding: 12px; color: var(--color-base);">${col1Name}</th>`;
+    subLabels.forEach(sub => {
+        trHead += `<th style="padding: 12px; color: var(--color-base); text-align: center;">${sub}</th>`;
+    });
+    trHead += `<th style="padding: 12px; color: var(--color-base); font-weight: bold; text-align: center;">Total</th>`;
+    trHead += '</tr>';
+    thead.innerHTML = trHead;
+
+    tbody.innerHTML = '';
+
+    // Data rows
+    yLabels.forEach(y => {
+        const tr = document.createElement('tr');
+        tr.style.borderBottom = '1px solid var(--color-montanha)';
+
+        let trContent = `<td style="padding: 12px; font-weight: 500;">${y}</td>`;
+
+        let localTotal = 0;
+        const rowValues = [];
+        subLabels.forEach(sub => {
+            const val = pivotData.dataMatrix[y][sub] || 0;
+            localTotal += val;
+            rowValues.push(val);
+        });
+
+        rowValues.forEach(val => {
+            if (val > 0) {
+                trContent += `<td style="padding: 12px; text-align: center;">${decimalToTimeMike(val)}</td>`;
+            } else {
+                trContent += `<td style="padding: 12px; text-align: center; color: var(--color-montanha);">-</td>`;
+            }
+        });
+
+        // Add total with decimalToTimeMike
+        const tdTotal = document.createElement('td');
+        tdTotal.style.padding = '12px';
+        tdTotal.style.textAlign = 'center';
+        tdTotal.style.fontWeight = 'bold';
+        tdTotal.style.color = 'var(--color-violet-primary)';
+
+        // Progress bar background for the sum column relative to the sum of the array? 
+        // Let user have a straight text format.
+        tdTotal.innerText = decimalToTimeMike(localTotal);
+
+        tr.innerHTML = trContent;
+        tr.appendChild(tdTotal);
+        tbody.appendChild(tr);
+    });
+}
+
+function decimalToTimeMike(decimalHoras) {
+    if (!decimalHoras) return '00:00';
+    const num = Number(decimalHoras);
+    const h = Math.floor(Math.abs(num));
+    const m = Math.round((Math.abs(num) - h) * 60);
+    const sign = num < 0 ? '-' : '';
+    return `${sign}${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+function renderMikeTable(df) {
+    const tableBody = document.getElementById('tbody-mike-tags');
+    if (!tableBody) return;
+
+    const acc = {};
+    let sumTotalGlobal = 0;
+
+    df.forEach(item => {
+        let tagsArr = (item.tags && item.tags.length > 0) ? item.tags : ['Sem especialidade'];
+        tagsArr.forEach(tag => {
+            const t = tag.trim();
+            if (!t) return;
+            if (!acc[t]) acc[t] = { tag: t, horas: 0, quantidade: 0 };
+
+            acc[t].horas += item.horas;
+            acc[t].quantidade += (item.quantidade || 0);
+        });
+
+        sumTotalGlobal += item.horas;
+    });
+
+    let dados = Object.values(acc);
+
+    dados.forEach(d => {
+        d.media = d.quantidade > 0 ? (d.horas / d.quantidade) : d.horas;
+        d.perc = sumTotalGlobal > 0 ? (d.horas / sumTotalGlobal) * 100 : 0;
+    });
+
+    // Ordenação
+    const col = STATE.mike.tableSortColumn;
+    const dir = STATE.mike.tableSortDir === 'asc' ? 1 : -1;
+
+    dados.sort((a, b) => {
+        if (col === 'tag') {
+            return a.tag.localeCompare(b.tag) * dir;
+        } else {
+            return (a[col] - b[col]) * dir;
+        }
+    });
+
+    tableBody.innerHTML = '';
+
+    dados.forEach(d => {
+        const tr = document.createElement('tr');
+        tr.style.borderBottom = '1px solid var(--color-montanha)';
+
+        // Percent Progress Background via cell
+        const tdPerc = document.createElement('td');
+        tdPerc.style.padding = '12px';
+        tdPerc.style.fontWeight = 'bold';
+        tdPerc.style.background = `linear-gradient(to right, rgba(189,95,255,0.15) ${d.perc}%, transparent ${d.perc}%)`;
+        tdPerc.innerText = d.perc.toFixed(1) + '%';
+
+        tr.innerHTML = `
+            <td style="padding: 12px; color: var(--color-base);">${d.tag}</td>
+            <td style="padding: 12px; font-weight: 500;">${decimalToTimeMike(d.horas)}</td>
+            <td style="padding: 12px;">${d.quantidade.toLocaleString('pt-BR')}</td>
+            <td style="padding: 12px; font-weight: 500; color: var(--color-text-main);">${decimalToTimeMike(d.media)}</td>
+        `;
+
+        tr.appendChild(tdPerc);
+        tableBody.appendChild(tr);
+    });
+}
+

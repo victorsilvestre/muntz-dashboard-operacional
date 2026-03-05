@@ -52,6 +52,9 @@
                     <li class="nav-item" id="nav-tempo-execucao">
                         <a href="#"><i class="ri-timer-line"></i> <span class="nav-text">Tempo de Execução</span></a>
                     </li>
+                    <li class="nav-item" id="nav-mike">
+                        <a href="#"><i class="ri-user-star-line"></i> <span class="nav-text">Mike</span></a>
+                    </li>
 
                 </ul>
             </nav>
@@ -575,6 +578,116 @@
 
                 </div>
             </div> <!-- FIM PAGE: TEMPO DE EXECUÇÃO -->
+
+            <!-- PAGE: MIKE -->
+            <div id="page-mike" class="dashboard-page hidden">
+                <div class="charts-grid">
+                    <!-- Cliente x Horas Totais -->
+                    <div class="chart-card glass-card span-12" style="overflow-x: auto;">
+                        <div class="card-header">
+                            <h3><i class="ri-building-4-line"></i> Total de Horas Lançadas por Cliente</h3>
+                        </div>
+                        <div class="table-responsive" style="margin-top: 15px; max-height: 400px; overflow-y: auto;">
+                            <table class="mike-table" style="width: 100%; border-collapse: collapse; text-align: left;">
+                                <thead id="thead-mike-clientes"></thead>
+                                <tbody id="tbody-mike-clientes" style="color: var(--color-text-main);"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Equipes x Clientes -->
+                    <div class="chart-card glass-card span-12" style="overflow-x: auto;">
+                        <div class="card-header">
+                            <h3><i class="ri-group-line"></i> Total de Horas por Equipe e Cliente</h3>
+                        </div>
+                        <div class="table-responsive" style="margin-top: 15px; max-height: 400px; overflow-y: auto;">
+                            <table class="mike-table" style="width: 100%; border-collapse: collapse; text-align: left;">
+                                <thead id="thead-mike-equipes"></thead>
+                                <tbody id="tbody-mike-equipes" style="color: var(--color-text-main);"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Cargos x Clientes -->
+                    <div class="chart-card glass-card span-12" style="overflow-x: auto;">
+                        <div class="card-header">
+                            <h3><i class="ri-briefcase-4-line"></i> Total de Horas por Cargo e Cliente</h3>
+                        </div>
+                        <div class="table-responsive" style="margin-top: 15px; max-height: 400px; overflow-y: auto;">
+                            <table class="mike-table" style="width: 100%; border-collapse: collapse; text-align: left;">
+                                <thead id="thead-mike-cargos"></thead>
+                                <tbody id="tbody-mike-cargos" style="color: var(--color-text-main);"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Perfis x Clientes -->
+                    <div class="chart-card glass-card span-12" style="overflow-x: auto;">
+                        <div class="card-header">
+                            <h3><i class="ri-user-smile-line"></i> Total de Horas por Perfil e Cliente</h3>
+                        </div>
+                        <div class="table-responsive" style="margin-top: 15px; max-height: 400px; overflow-y: auto;">
+                            <table class="mike-table" style="width: 100%; border-collapse: collapse; text-align: left;">
+                                <thead id="thead-mike-perfis"></thead>
+                                <tbody id="tbody-mike-perfis" style="color: var(--color-text-main);"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Tags x Clientes -->
+                    <div class="chart-card glass-card span-12" style="overflow-x: auto;">
+                        <div class="card-header">
+                            <h3><i class="ri-price-tag-3-line"></i> Total de Horas por Tag e Cliente</h3>
+                        </div>
+                        <div class="table-responsive" style="margin-top: 15px; max-height: 400px; overflow-y: auto;">
+                            <table class="mike-table" style="width: 100%; border-collapse: collapse; text-align: left;">
+                                <thead id="thead-mike-pivot-tags"></thead>
+                                <tbody id="tbody-mike-pivot-tags" style="color: var(--color-text-main);"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Tabela Tags -->
+                    <div class="chart-card glass-card span-12" style="overflow-x: auto;">
+                        <div class="card-header">
+                            <h3><i class="ri-table-line"></i> Detalhamento por Especialidade (Tags)</h3>
+                        </div>
+                        <div class="table-responsive" style="margin-top: 15px;">
+                            <table class="mike-table" style="width: 100%; border-collapse: collapse; text-align: left;">
+                                <thead>
+                                    <tr style="border-bottom: 2px solid var(--color-montanha);">
+                                        <th data-sort="tag"
+                                            style="padding: 12px; cursor: pointer; color: var(--color-base);">Tag <i
+                                                class="ri-arrow-up-down-line"
+                                                style="font-size: 0.8rem; color: var(--color-text-main);"></i></th>
+                                        <th data-sort="horas"
+                                            style="padding: 12px; cursor: pointer; color: var(--color-base);">Total de
+                                            Horas <i class="ri-arrow-up-down-line"
+                                                style="font-size: 0.8rem; color: var(--color-text-main);"></i></th>
+                                        <th data-sort="qtd"
+                                            style="padding: 12px; cursor: pointer; color: var(--color-base);">Qtd. Itens
+                                            <i class="ri-arrow-up-down-line"
+                                                style="font-size: 0.8rem; color: var(--color-text-main);"></i>
+                                        </th>
+                                        <th data-sort="media"
+                                            style="padding: 12px; cursor: pointer; color: var(--color-base);">Média de
+                                            Horas <i class="ri-arrow-up-down-line"
+                                                style="font-size: 0.8rem; color: var(--color-text-main);"></i></th>
+                                        <th data-sort="perc"
+                                            style="padding: 12px; cursor: pointer; color: var(--color-base);">% do Total
+                                            <i class="ri-arrow-down-line"
+                                                style="font-size: 0.8rem; color: var(--color-violet-primary);"></i>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-mike-tags" style="color: var(--color-text-main);">
+                                    <!-- Dynamic content -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div> <!-- FIM PAGE: MIKE -->
 
         </main>
     </div>
