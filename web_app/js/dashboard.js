@@ -6,6 +6,7 @@
 const STATE = {
     rawData: [],
     filteredData: [],
+    coordData: [],
     charts: {},
     currentPage: 'visao-geral',
     tempoExecucao: {
@@ -55,10 +56,12 @@ const UI = {
     navPerfil: document.getElementById('nav-perfil'),
     navTempoExecucao: document.getElementById('nav-tempo-execucao'),
     navMike: document.getElementById('nav-mike'),
+    navCoord: document.getElementById('nav-coord'),
     pageVisaoGeral: document.getElementById('page-visao-geral'),
     pagePerfil: document.getElementById('page-perfil'),
     pageTempoExecucao: document.getElementById('page-tempo-execucao'),
     pageMike: document.getElementById('page-mike'),
+    pageCoord: document.getElementById('page-coord'),
     // Page Perfil KPIs & Blocks
     kpiPerfil: {
         totalPerfis: document.getElementById('kpi-total-perfis'),
@@ -196,18 +199,32 @@ async function initDashboard() {
 
         // We assume index.html is in web_app/ and csv is in data/
         const targetCsvUrl = 'data/relatorio_completo_jan_fev_2026_030326.csv';
+        const coordCsvUrl = 'data/Coordenação _ Tempo Ideal por Tag.csv';
 
-        Papa.parse(targetCsvUrl, {
+        Papa.parse(coordCsvUrl, {
             download: true,
             header: true,
             skipEmptyLines: true,
             delimiter: ';',
-            complete: function (results) {
-                processData(results.data);
+            complete: function (resultsCoord) {
+                STATE.coordData = resultsCoord.data;
+
+                Papa.parse(targetCsvUrl, {
+                    download: true,
+                    header: true,
+                    skipEmptyLines: true,
+                    delimiter: ';',
+                    complete: function (results) {
+                        processData(results.data);
+                    },
+                    error: function (err) {
+                        console.error("Erro ao carregar CSV:", err);
+                        UI.loader.innerHTML = `<p style="color:red">Erro ao carregar dataset csv. Verifique as rotas e o formato.</p>`;
+                    }
+                });
             },
             error: function (err) {
-                console.error("Erro ao carregar CSV:", err);
-                UI.loader.innerHTML = `<p style="color:red">Erro ao carregar dataset csv. Verifique as rotas e o formato.</p>`;
+                console.error("Erro ao carregar CSV Coord:", err);
             }
         });
     } catch (e) {
@@ -389,6 +406,14 @@ function bindEvents() {
         });
     }
 
+    if (UI.navCoord) {
+        UI.navCoord.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (STATE.currentPage === 'coord') return;
+            navigateToPage('coord');
+        });
+    }
+
     // Mike Table Sort Events
     const mikeHeaders = document.querySelectorAll('.mike-table th[data-sort]');
     mikeHeaders.forEach(th => {
@@ -423,12 +448,12 @@ function updateMikeTableHeaders() {
 
 function navigateToPage(pageName) {
     // Remover active de todos os nav-items
-    [UI.navVisaoGeral, UI.navPerfil, UI.navTempoExecucao, UI.navMike].forEach(nav => {
+    [UI.navVisaoGeral, UI.navPerfil, UI.navTempoExecucao, UI.navMike, UI.navCoord].forEach(nav => {
         if (nav) nav.classList.remove('active');
     });
 
     // Ocultar todas as páginas
-    [UI.pageVisaoGeral, UI.pagePerfil, UI.pageTempoExecucao, UI.pageMike].forEach(page => {
+    [UI.pageVisaoGeral, UI.pagePerfil, UI.pageTempoExecucao, UI.pageMike, UI.pageCoord].forEach(page => {
         if (page) page.classList.add('hidden');
     });
 
@@ -453,6 +478,10 @@ function navigateToPage(pageName) {
         UI.pageMike.classList.remove('hidden');
         UI.navMike.classList.add('active');
         if (pageTitle) pageTitle.textContent = 'Análise Cruzada (Mike)';
+    } else if (pageName === 'coord') {
+        UI.pageCoord.classList.remove('hidden');
+        UI.navCoord.classList.add('active');
+        if (pageTitle) pageTitle.textContent = 'Tempo Ideal Coord.';
     }
 
     // Re-renderizar apenas a página ativa
@@ -492,9 +521,51 @@ function updateDashboard() {
         renderChartsTempoExecucao(df);
     } else if (STATE.currentPage === 'mike') {
         renderChartsMike(df);
+    } else if (STATE.currentPage === 'coord') {
+        renderTableCoord();
     } else {
         renderChartsVisaoGeral(df);
     }
+}
+
+function renderTableCoord() {
+    const thead = document.getElementById('thead-coord');
+    const tbody = document.getElementById('tbody-coord');
+    if (!thead || !tbody) return;
+
+    if (!STATE.coordData || STATE.coordData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="padding:15px; text-align:center;">Sem dados de coordenação...</td></tr>';
+        return;
+    }
+
+    const cols = Object.keys(STATE.coordData[0]);
+
+    // Thead
+    let theadHtml = '<tr style="border-bottom: 2px solid var(--border-color);">';
+    cols.forEach(col => {
+        theadHtml += `<th style="padding: 12px; font-weight: 500; color: var(--color-base);">${col}</th>`;
+    });
+    theadHtml += '</tr>';
+    thead.innerHTML = theadHtml;
+
+    // Tbody
+    let tbodyHtml = '';
+    STATE.coordData.forEach((row, i) => {
+        const isVazia = cols.every(col => !row[col] || row[col].trim() === '');
+        if (isVazia) return;
+
+        tbodyHtml += `<tr style="border-bottom: 1px solid var(--border-color); transition: background-color 0.2s;">`;
+        cols.forEach(col => {
+            const val = row[col] || '-';
+            if (col === cols[0]) {
+                tbodyHtml += `<td style="padding: 12px; font-weight: 500; color: var(--color-base);">${val}</td>`;
+            } else {
+                tbodyHtml += `<td style="padding: 12px;">${val}</td>`;
+            }
+        });
+        tbodyHtml += '</tr>';
+    });
+    tbody.innerHTML = tbodyHtml;
 }
 
 function renderChartsVisaoGeral(df) {
