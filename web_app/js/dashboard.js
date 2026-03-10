@@ -244,9 +244,10 @@ function processData(rows) {
 
         // Parse Month for Time Filter
         // Assumes format DD/MM/YYYY or similar parsing
+        let rawDate = row['Data Assignment'] || row['Criada em'] || '';
         let mes = '';
-        if (row['Criada em']) {
-            const parts = row['Criada em'].split('/'); // Split by typical Brazilian format
+        if (rawDate) {
+            const parts = rawDate.split('/'); // Split by typical Brazilian format
             if (parts.length >= 2) {
                 const mesNum = parseInt(parts[1], 10);
                 const yearStr = parts[2].substring(0, 4); // handle potential time appending
