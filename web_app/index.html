@@ -58,6 +58,9 @@
                     <li class="nav-item" id="nav-coord">
                         <a href="#"><i class="ri-survey-line"></i> <span class="nav-text">Tempo Ideal Coord.</span></a>
                     </li>
+                    <li class="nav-item" id="nav-medias">
+                        <a href="#"><i class="ri-calculator-line"></i> <span class="nav-text">Médias</span></a>
+                    </li>
 
                 </ul>
             </nav>
@@ -709,11 +712,68 @@
                 </div>
             </div> <!-- FIM PAGE: COORD -->
 
+            <!-- PAGE: MEDIAS -->
+            <div id="page-medias" class="dashboard-page hidden">
+                <div class="charts-grid">
+                    <!-- Diretor de Arte -->
+                    <div class="chart-card glass-card span-12" style="overflow-x: auto;">
+                        <div class="card-header">
+                            <h3><i class="ri-brush-line"></i> Médias - Diretor de Arte</h3>
+                        </div>
+                        <div class="table-responsive" style="margin-top: 15px;">
+                            <table class="mike-table medias-table" id="table-medias-diretor" style="width: 100%; border-collapse: collapse; text-align: left;">
+                                <thead id="thead-medias-diretor"></thead>
+                                <tbody id="tbody-medias-diretor" style="color: var(--color-text-main);"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Redator -->
+                    <div class="chart-card glass-card span-12" style="overflow-x: auto;">
+                        <div class="card-header">
+                            <h3><i class="ri-quill-pen-line"></i> Médias - Redator</h3>
+                        </div>
+                        <div class="table-responsive" style="margin-top: 15px;">
+                            <table class="mike-table medias-table" id="table-medias-redator" style="width: 100%; border-collapse: collapse; text-align: left;">
+                                <thead id="thead-medias-redator"></thead>
+                                <tbody id="tbody-medias-redator" style="color: var(--color-text-main);"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Analista de Mídia -->
+                    <div class="chart-card glass-card span-12" style="overflow-x: auto;">
+                        <div class="card-header">
+                            <h3><i class="ri-bar-chart-groupped-line"></i> Médias - Analista de Mídia</h3>
+                        </div>
+                        <div class="table-responsive" style="margin-top: 15px;">
+                            <table class="mike-table medias-table" id="table-medias-midia" style="width: 100%; border-collapse: collapse; text-align: left;">
+                                <thead id="thead-medias-midia"></thead>
+                                <tbody id="tbody-medias-midia" style="color: var(--color-text-main);"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Analista de Tech -->
+                    <div class="chart-card glass-card span-12" style="overflow-x: auto;">
+                        <div class="card-header">
+                            <h3><i class="ri-macbook-line"></i> Médias - Analista de Tech</h3>
+                        </div>
+                        <div class="table-responsive" style="margin-top: 15px;">
+                            <table class="mike-table medias-table" id="table-medias-tech" style="width: 100%; border-collapse: collapse; text-align: left;">
+                                <thead id="thead-medias-tech"></thead>
+                                <tbody id="tbody-medias-tech" style="color: var(--color-text-main);"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div> <!-- FIM PAGE: MEDIAS -->
+
         </main>
     </div>
 
     <!-- Application Script -->
-    <script type="module" src="js/dashboard.js"></script>
+    <script type="module" src="js/dashboard.js?v=2"></script>
 </body>
 
 </html>

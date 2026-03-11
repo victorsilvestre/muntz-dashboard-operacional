@@ -16,6 +16,14 @@ const STATE = {
         tableSortColumn: 'perc',
         tableSortDir: 'desc'
     },
+    medias: {
+        sortParams: {
+            'diretor': { col: 'tag', dir: 'asc' },
+            'redator': { col: 'tag', dir: 'asc' },
+            'midia': { col: 'tag', dir: 'asc' },
+            'tech': { col: 'tag', dir: 'asc' }
+        }
+    },
     filters: {
         urgente: false,
         atraso: false,
@@ -51,17 +59,18 @@ const UI = {
     sidebar: document.getElementById('sidebar'),
     themeToggle: document.getElementById('theme-toggle'),
     themeIcon: document.getElementById('theme-icon'),
-    // SPA Navbar & Pages
     navVisaoGeral: document.getElementById('nav-visao-geral'),
     navPerfil: document.getElementById('nav-perfil'),
     navTempoExecucao: document.getElementById('nav-tempo-execucao'),
     navMike: document.getElementById('nav-mike'),
     navCoord: document.getElementById('nav-coord'),
+    navMedias: document.getElementById('nav-medias'),
     pageVisaoGeral: document.getElementById('page-visao-geral'),
     pagePerfil: document.getElementById('page-perfil'),
     pageTempoExecucao: document.getElementById('page-tempo-execucao'),
     pageMike: document.getElementById('page-mike'),
     pageCoord: document.getElementById('page-coord'),
+    pageMedias: document.getElementById('page-medias'),
     // Page Perfil KPIs & Blocks
     kpiPerfil: {
         totalPerfis: document.getElementById('kpi-total-perfis'),
@@ -198,8 +207,8 @@ async function initDashboard() {
         initTheme(); // Executa rotina de visual logo no início
 
         // We assume index.html is in web_app/ and csv is in data/
-        const targetCsvUrl = 'data/relatorio_completo_jan_fev_2026_030326.csv';
-        const coordCsvUrl = 'data/Coordenação _ Tempo Ideal por Tag.csv';
+        const targetCsvUrl = 'data/relatorio_completo_jan_fev_2026_030326.csv?v=' + new Date().getTime();
+        const coordCsvUrl = 'data/Coordenação _ Tempo Ideal por Tag.csv?v=' + new Date().getTime();
 
         Papa.parse(coordCsvUrl, {
             download: true,
@@ -415,6 +424,14 @@ function bindEvents() {
         });
     }
 
+    if (UI.navMedias) {
+        UI.navMedias.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (STATE.currentPage === 'medias') return;
+            navigateToPage('medias');
+        });
+    }
+
     // Mike Table Sort Events
     const mikeHeaders = document.querySelectorAll('.mike-table th[data-sort]');
     mikeHeaders.forEach(th => {
@@ -449,12 +466,12 @@ function updateMikeTableHeaders() {
 
 function navigateToPage(pageName) {
     // Remover active de todos os nav-items
-    [UI.navVisaoGeral, UI.navPerfil, UI.navTempoExecucao, UI.navMike, UI.navCoord].forEach(nav => {
+    [UI.navVisaoGeral, UI.navPerfil, UI.navTempoExecucao, UI.navMike, UI.navCoord, UI.navMedias].forEach(nav => {
         if (nav) nav.classList.remove('active');
     });
 
     // Ocultar todas as páginas
-    [UI.pageVisaoGeral, UI.pagePerfil, UI.pageTempoExecucao, UI.pageMike, UI.pageCoord].forEach(page => {
+    [UI.pageVisaoGeral, UI.pagePerfil, UI.pageTempoExecucao, UI.pageMike, UI.pageCoord, UI.pageMedias].forEach(page => {
         if (page) page.classList.add('hidden');
     });
 
@@ -483,6 +500,10 @@ function navigateToPage(pageName) {
         UI.pageCoord.classList.remove('hidden');
         UI.navCoord.classList.add('active');
         if (pageTitle) pageTitle.textContent = 'Tempo Ideal Coord.';
+    } else if (pageName === 'medias') {
+        UI.pageMedias.classList.remove('hidden');
+        UI.navMedias.classList.add('active');
+        if (pageTitle) pageTitle.textContent = 'Médias de Desempenho';
     }
 
     // Re-renderizar apenas a página ativa
@@ -524,6 +545,8 @@ function updateDashboard() {
         renderChartsMike(df);
     } else if (STATE.currentPage === 'coord') {
         renderTableCoord();
+    } else if (STATE.currentPage === 'medias') {
+        renderPageMedias(df);
     } else {
         renderChartsVisaoGeral(df);
     }
@@ -2291,4 +2314,159 @@ function renderMikeTable(df) {
     `;
     tableBody.appendChild(trTotal);
 }
+
+// ==========================================
+// 6. RENDER PAGE: MEDIAS
+// ==========================================
+
+function renderPageMedias(df) {
+    if (df.length === 0) return;
+
+    renderTableMediasPorCargo(df, 'Diretor de Arte', 'diretor', 'thead-medias-diretor', 'tbody-medias-diretor');
+    renderTableMediasPorCargo(df, 'Redator', 'redator', 'thead-medias-redator', 'tbody-medias-redator');
+    renderTableMediasPorCargo(df, 'Analista de Mídia', 'midia', 'thead-medias-midia', 'tbody-medias-midia');
+    renderTableMediasPorCargo(df, 'Analista de Tech', 'tech', 'thead-medias-tech', 'tbody-medias-tech');
+}
+
+function renderTableMediasPorCargo(df, nomeCargo, stateKey, theadId, tbodyId) {
+    const tableHead = document.getElementById(theadId);
+    const tableBody = document.getElementById(tbodyId);
+    if (!tableHead || !tableBody) return;
+
+    let dfCargo = df.filter(item => {
+        return (item.cargo || '').toLowerCase() === nomeCargo.toLowerCase();
+    });
+
+    const perfisSet = new Set();
+    const dadosPorTag = {}; 
+    const tarefasVistasMap = {};
+
+    dfCargo.forEach(item => {
+        let pName = (item.perfil || '(Vazio)').trim();
+        perfisSet.add(pName);
+
+        let tagsArr = (item.tags && item.tags.length > 0) ? item.tags : ['(Vazio)'];
+        tagsArr.forEach(tagRaw => {
+            const t = tagRaw.trim();
+            if(!t) return;
+
+            if(!dadosPorTag[t]) dadosPorTag[t] = {};
+            if(!dadosPorTag[t][pName]) dadosPorTag[t][pName] = { horas: 0, quantidade: 0 };
+
+            dadosPorTag[t][pName].horas += item.horas;
+            
+            const targetId = item.id ? String(item.id).trim() : '';
+            const idTagCombo = `${targetId}-${t}-${pName}`;
+            
+            if (targetId && !tarefasVistasMap[idTagCombo]) {
+                dadosPorTag[t][pName].quantidade += (item.quantidade || 0);
+                tarefasVistasMap[idTagCombo] = true;
+            } else if (!targetId) {
+                dadosPorTag[t][pName].quantidade += (item.quantidade || 0);
+            }
+        });
+    });
+
+    const perfisArray = Array.from(perfisSet).sort();
+
+    let theadHtml1 = `<tr><th rowspan="2" class="sortable" data-cargo="${stateKey}" data-col="tag" style="padding: 12px; border-bottom: 2px solid var(--border-color); color: var(--color-base); cursor: pointer; vertical-align: bottom;">Tag <i class="ri-arrow-up-down-line" style="font-size: 0.8rem; color: var(--color-text-main);"></i></th>`;
+    perfisArray.forEach(p => {
+        theadHtml1 += `<th colspan="4" style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: center; color: var(--color-base); border-left: 2px solid var(--border-color);">${p}</th>`;
+    });
+    theadHtml1 += `</tr>`;
+
+    let theadHtml2 = `<tr style="border-bottom: 2px solid var(--border-color);">`;
+    perfisArray.forEach(p => {
+        theadHtml2 += `
+            <th class="sortable" data-cargo="${stateKey}" data-col="horas-${p}" style="padding: 12px; color: var(--color-base); border-left: 2px solid var(--border-color); cursor: pointer; white-space: nowrap; font-weight: 500;">Horas <i class="ri-arrow-up-down-line" style="font-size: 0.8rem; color: var(--color-text-main);"></i></th>
+            <th class="sortable" data-cargo="${stateKey}" data-col="qtd-${p}" style="padding: 12px; color: var(--color-base); cursor: pointer; white-space: nowrap; font-weight: 500;">Qtd Itens <i class="ri-arrow-up-down-line" style="font-size: 0.8rem; color: var(--color-text-main);"></i></th>
+            <th class="sortable" data-cargo="${stateKey}" data-col="media-${p}" style="padding: 12px; color: var(--color-base); cursor: pointer; white-space: nowrap; font-weight: 500;">Média <i class="ri-arrow-up-down-line" style="font-size: 0.8rem; color: var(--color-text-main);"></i></th>
+            <th class="sortable" data-cargo="${stateKey}" data-col="idp-${p}" style="padding: 12px; color: var(--color-base); cursor: pointer; white-space: nowrap; font-weight: 500;">IDP <i class="ri-arrow-up-down-line" style="font-size: 0.8rem; color: var(--color-text-main);"></i></th>
+        `;
+    });
+    theadHtml2 += `</tr>`;
+    
+    tableHead.innerHTML = theadHtml1 + theadHtml2;
+
+    const { col: sortCol, dir: sortDir } = STATE.medias.sortParams[stateKey];
+    
+    const sortHeaders = tableHead.querySelectorAll('.sortable');
+    sortHeaders.forEach(th => {
+        const c = th.getAttribute('data-col');
+        const icon = th.querySelector('i');
+        if (c === sortCol) {
+            icon.className = sortDir === 'asc' ? 'ri-arrow-up-line' : 'ri-arrow-down-line';
+            icon.style.color = 'var(--color-violet-primary)';
+        }
+        
+        th.addEventListener('click', () => {
+            if (STATE.medias.sortParams[stateKey].col === c) {
+                STATE.medias.sortParams[stateKey].dir = STATE.medias.sortParams[stateKey].dir === 'asc' ? 'desc' : 'asc';
+            } else {
+                STATE.medias.sortParams[stateKey].col = c;
+                STATE.medias.sortParams[stateKey].dir = 'desc';
+            }
+            renderPageMedias(STATE.filteredData);
+        });
+    });
+
+    const getMetrics = (tagData, p) => {
+        if(!tagData || !tagData[p]) return { h: 0, q: 0, m: 0, i: 0 };
+        const h = tagData[p].horas;
+        const q = tagData[p].quantidade;
+        const m = q > 0 ? h / q : 0; // Average hours per item
+        const i = h > 0 ? q / h : 0; // IDP: items per hour
+        return { h, q, m, i };
+    };
+
+    let tagsList = Object.keys(dadosPorTag);
+    
+    tagsList.sort((a, b) => {
+        const factor = sortDir === 'asc' ? 1 : -1;
+        if (sortCol === 'tag') {
+            return a.localeCompare(b) * factor;
+        } else {
+            const parts = sortCol.split('-');
+            const metric = parts[0];
+            const p = parts.slice(1).join('-');
+            
+            const m1 = getMetrics(dadosPorTag[a], p);
+            const m2 = getMetrics(dadosPorTag[b], p);
+            
+            let val1 = 0; let val2 = 0;
+            if (metric === 'horas') { val1 = m1.h; val2 = m2.h; }
+            if (metric === 'qtd') { val1 = m1.q; val2 = m2.q; }
+            if (metric === 'media') { val1 = m1.m; val2 = m2.m; }
+            if (metric === 'idp') { val1 = m1.i; val2 = m2.i; }
+            
+            return (val1 - val2) * factor;
+        }
+    });
+
+    tableBody.innerHTML = '';
+    
+    if (tagsList.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="${perfisArray.length * 4 + 1}" style="padding:15px; text-align:center;">Sem dados para este cargo.</td></tr>`;
+        return;
+    }
+
+    tagsList.forEach(t => {
+        let trHtml = `<tr style="border-bottom: 1px solid var(--border-color);"><td style="padding: 12px; color: var(--color-base); font-weight: 500;">${t}</td>`;
+        
+        perfisArray.forEach(p => {
+            const metrics = getMetrics(dadosPorTag[t], p);
+            
+            trHtml += `
+                <td style="padding: 12px; text-align: center; border-left: 2px solid var(--border-color);">${metrics.h > 0 ? decimalToTimeMike(metrics.h) : '-'}</td>
+                <td style="padding: 12px; text-align: center;">${metrics.q > 0 ? metrics.q.toLocaleString('pt-BR') : '-'}</td>
+                <td style="padding: 12px; text-align: center;">${metrics.m > 0 ? decimalToTimeMike(metrics.m) : '-'}</td>
+                <td style="padding: 12px; text-align: center; color: var(--color-violet-primary); font-weight: bold;">${metrics.i > 0 ? metrics.i.toFixed(2) : '-'}</td>
+            `;
+        });
+        
+        trHtml += `</tr>`;
+        tableBody.insertAdjacentHTML('beforeend', trHtml);
+    });
+}
+
 
