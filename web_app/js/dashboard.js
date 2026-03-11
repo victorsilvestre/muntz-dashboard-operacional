@@ -2373,6 +2373,7 @@ function renderTableMediasPorCargo(df, nomeCargo, stateKey, theadId, tbodyId) {
     perfisArray.forEach(p => {
         theadHtml1 += `<th colspan="4" style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: center; color: var(--color-base); border-left: 2px solid var(--border-color);">${p}</th>`;
     });
+    theadHtml1 += `<th rowspan="2" style="padding: 12px; border-bottom: 2px solid var(--border-color); text-align: center; color: var(--color-base); border-left: 2px solid var(--border-color); vertical-align: bottom; background: rgba(0,0,0,0.02);">Média Cargo</th>`;
     theadHtml1 += `</tr>`;
 
     let theadHtml2 = `<tr style="border-bottom: 2px solid var(--border-color);">`;
@@ -2446,25 +2447,50 @@ function renderTableMediasPorCargo(df, nomeCargo, stateKey, theadId, tbodyId) {
     tableBody.innerHTML = '';
     
     if (tagsList.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="${perfisArray.length * 4 + 1}" style="padding:15px; text-align:center;">Sem dados para este cargo.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="${perfisArray.length * 4 + 2}" style="padding:15px; text-align:center;">Sem dados para este cargo.</td></tr>`;
         return;
     }
 
     tagsList.forEach(t => {
+        let totalCargoHoras = 0;
+        let totalCargoQtd = 0;
+        perfisArray.forEach(p => {
+            const m = getMetrics(dadosPorTag[t], p);
+            totalCargoHoras += m.h;
+            totalCargoQtd += m.q;
+        });
+        const mediaCargo = totalCargoQtd > 0 ? totalCargoHoras / totalCargoQtd : 0;
+
         let trHtml = `<tr style="border-bottom: 1px solid var(--border-color);"><td style="padding: 12px; color: var(--color-base); font-weight: 500;">${t}</td>`;
         
         perfisArray.forEach(p => {
             const metrics = getMetrics(dadosPorTag[t], p);
             
+            let iconHtml = '';
+            if (metrics.m > 0 && mediaCargo > 0) {
+                // Margem de 1% para não dar falso positivo por arredondamento
+                if (metrics.m > mediaCargo * 1.01) {
+                    iconHtml = ` <i class="ri-arrow-up-circle-fill" style="color: var(--color-laranja-solar);" title="Média superior à do cargo (pior)"></i>`;
+                } else if (metrics.m < mediaCargo * 0.99) {
+                    iconHtml = ` <i class="ri-arrow-down-circle-fill" style="color: #10B981;" title="Média inferior à do cargo (melhor)"></i>`;
+                } else {
+                    iconHtml = ` <i class="ri-subtract-line" style="color: var(--color-montanha);" title="Na média do cargo"></i>`;
+                }
+            }
+            
             trHtml += `
                 <td style="padding: 12px; text-align: center; border-left: 2px solid var(--border-color);">${metrics.h > 0 ? decimalToTimeMike(metrics.h) : '-'}</td>
                 <td style="padding: 12px; text-align: center;">${metrics.q > 0 ? metrics.q.toLocaleString('pt-BR') : '-'}</td>
-                <td style="padding: 12px; text-align: center;">${metrics.m > 0 ? decimalToTimeMike(metrics.m) : '-'}</td>
+                <td style="padding: 12px; text-align: center; white-space: nowrap;">${metrics.m > 0 ? decimalToTimeMike(metrics.m) + iconHtml : '-'}</td>
                 <td style="padding: 12px; text-align: center; color: var(--color-violet-primary); font-weight: bold;">${metrics.i > 0 ? metrics.i.toFixed(2) : '-'}</td>
             `;
         });
         
-        trHtml += `</tr>`;
+        trHtml += `
+            <td style="padding: 12px; text-align: center; font-weight: bold; background: rgba(0,0,0,0.02); border-left: 2px solid var(--border-color); color: var(--color-base);">
+                ${mediaCargo > 0 ? decimalToTimeMike(mediaCargo) : '-'}
+            </td>
+        </tr>`;
         tableBody.insertAdjacentHTML('beforeend', trHtml);
     });
 }
