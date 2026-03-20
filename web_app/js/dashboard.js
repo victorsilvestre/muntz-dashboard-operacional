@@ -564,13 +564,70 @@ function renderTableCoord() {
 
     const cols = Object.keys(STATE.coordData[0]);
 
+    if (!STATE.coord) {
+        STATE.coord = {
+            tableSortColumn: null,
+            tableSortDir: 'desc'
+        };
+    }
+
+    // Apply Sorting logic
+    if (STATE.coord.tableSortColumn) {
+        const col = STATE.coord.tableSortColumn;
+        const dir = STATE.coord.tableSortDir === 'asc' ? 1 : -1;
+
+        STATE.coordData.sort((a, b) => {
+            const valA = (a[col] || '-').toString().trim();
+            const valB = (b[col] || '-').toString().trim();
+
+            const parseTime = (str) => {
+                if (str === '-') return -1;
+                const parts = str.split(':').map(Number);
+                if (parts.length === 2) return (parts[0] * 60) + parts[1];
+                return 0;
+            };
+
+            const isTimeA = valA.includes(':') || valA === '-';
+            const isTimeB = valB.includes(':') || valB === '-';
+
+            if (isTimeA && isTimeB && (valA.includes(':') || valB.includes(':'))) {
+                return (parseTime(valA) - parseTime(valB)) * dir;
+            }
+
+            return valA.localeCompare(valB) * dir;
+        });
+    }
+
     // Thead
     let theadHtml = '<tr style="border-bottom: 2px solid var(--border-color);">';
     cols.forEach(col => {
-        theadHtml += `<th style="padding: 12px; font-weight: 500; color: var(--color-base);">${col}</th>`;
+        let iconClass = 'ri-arrow-up-down-line';
+        let iconColor = 'var(--color-text-main)';
+        if (STATE.coord.tableSortColumn === col) {
+            iconClass = STATE.coord.tableSortDir === 'asc' ? 'ri-arrow-up-line' : 'ri-arrow-down-line';
+            iconColor = 'var(--color-violet-primary)';
+        }
+        theadHtml += `<th data-col="${col}" style="padding: 12px; font-weight: 500; color: var(--color-base); cursor: pointer;">
+            ${col} <i class="${iconClass}" style="font-size: 0.8rem; color: ${iconColor};"></i>
+        </th>`;
     });
     theadHtml += '</tr>';
     thead.innerHTML = theadHtml;
+
+    // Head Events
+    const ths = thead.querySelectorAll('th[data-col]');
+    ths.forEach(th => {
+        th.addEventListener('click', () => {
+            const col = th.getAttribute('data-col');
+            if (STATE.coord.tableSortColumn === col) {
+                STATE.coord.tableSortDir = STATE.coord.tableSortDir === 'asc' ? 'desc' : 'asc';
+            } else {
+                STATE.coord.tableSortColumn = col;
+                STATE.coord.tableSortDir = 'desc';
+            }
+            renderTableCoord();
+        });
+    });
 
     // Tbody
     let tbodyHtml = '';
