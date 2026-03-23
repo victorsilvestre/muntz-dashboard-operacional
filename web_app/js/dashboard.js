@@ -22,7 +22,8 @@ const STATE = {
             'redator': { col: 'tag', dir: 'asc' },
             'midia': { col: 'tag', dir: 'asc' },
             'tech': { col: 'tag', dir: 'asc' }
-        }
+        },
+        hiddenProfiles: {}
     },
     filters: {
         urgente: false,
@@ -207,7 +208,7 @@ async function initDashboard() {
         initTheme(); // Executa rotina de visual logo no início
 
         // We assume index.html is in web_app/ and csv is in data/
-        const targetCsvUrl = 'data/relatorio_completo_jan_fev_2026_030326.csv?v=' + new Date().getTime();
+        const targetCsvUrl = 'data/relatorio_completo_010126-a-150326.csv?v=' + new Date().getTime();
         const coordCsvUrl = 'data/Coordenação _ Tempo Ideal por Tag.csv?v=' + new Date().getTime();
 
         Papa.parse(coordCsvUrl, {
@@ -567,8 +568,12 @@ function renderTableCoord() {
     if (!STATE.coord) {
         STATE.coord = {
             tableSortColumn: null,
-            tableSortDir: 'desc'
+            tableSortDir: 'desc',
+            hiddenEquipes: []
         };
+    }
+    if (!STATE.coord.hiddenEquipes) {
+        STATE.coord.hiddenEquipes = [];
     }
 
     // Apply Sorting logic
@@ -598,18 +603,54 @@ function renderTableCoord() {
         });
     }
 
+    // Update UI for hidden items
+    const chartCard = thead.closest('.chart-card');
+    let hiddenContainer = chartCard.querySelector('.hidden-profiles-container');
+    if (!hiddenContainer) {
+        hiddenContainer = document.createElement('div');
+        hiddenContainer.className = 'hidden-profiles-container';
+        hiddenContainer.style.padding = '0 20px 10px 20px';
+        hiddenContainer.style.display = 'flex';
+        hiddenContainer.style.gap = '10px';
+        hiddenContainer.style.flexWrap = 'wrap';
+        
+        const header = chartCard.querySelector('.card-header');
+        header.parentNode.insertBefore(hiddenContainer, header.nextSibling);
+    }
+
+    if (STATE.coord.hiddenEquipes && STATE.coord.hiddenEquipes.length > 0) {
+        hiddenContainer.innerHTML = `<span style="font-size: 0.85rem; color: var(--color-text-main); align-self: center;">Equipes ocultas:</span>` +
+            STATE.coord.hiddenEquipes.map(eq => 
+                `<span style="background: var(--color-montanha); padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; cursor: pointer; color: var(--color-violet-dark); font-weight: 500; display: inline-flex; align-items: center; gap: 5px;" onclick="window.toggleEquipeCoord('${eq}')" title="Mostrar equipe">${eq} <i class="ri-eye-line"></i></span>`
+            ).join('');
+    } else {
+        hiddenContainer.innerHTML = '';
+    }
+
+    const visibleCols = [cols[0], ...cols.slice(1).filter(c => !(STATE.coord.hiddenEquipes || []).includes(c))];
+
     // Thead
     let theadHtml = '<tr style="border-bottom: 2px solid var(--border-color);">';
-    cols.forEach(col => {
+    visibleCols.forEach(col => {
         let iconClass = 'ri-arrow-up-down-line';
         let iconColor = 'var(--color-text-main)';
         if (STATE.coord.tableSortColumn === col) {
             iconClass = STATE.coord.tableSortDir === 'asc' ? 'ri-arrow-up-line' : 'ri-arrow-down-line';
             iconColor = 'var(--color-violet-primary)';
         }
-        theadHtml += `<th data-col="${col}" style="padding: 12px; font-weight: 500; color: var(--color-base); cursor: pointer;">
-            ${col} <i class="${iconClass}" style="font-size: 0.8rem; color: ${iconColor};"></i>
-        </th>`;
+        
+        if (col === cols[0]) {
+            theadHtml += `<th data-col="${col}" style="padding: 12px; font-weight: 500; color: var(--color-base); cursor: pointer;">
+                ${col} <i class="${iconClass}" style="font-size: 0.8rem; color: ${iconColor};"></i>
+            </th>`;
+        } else {
+            theadHtml += `<th data-col="${col}" style="padding: 12px; font-weight: 500; color: var(--color-base); cursor: pointer;">
+                <div style="display:flex; align-items:center; gap:6px;">
+                    ${col} <i class="${iconClass}" style="font-size: 0.8rem; color: ${iconColor};"></i>
+                    <i class="ri-eye-off-line" style="cursor: pointer; font-size: 1rem; color: var(--color-text-main); margin-left: auto;" onmouseover="this.style.color='var(--color-laranja-solar)'" onmouseout="this.style.color='var(--color-text-main)'" onclick="window.toggleEquipeCoord('${col}'); event.stopPropagation();" title="Ocultar equipe"></i>
+                </div>
+            </th>`;
+        }
     });
     theadHtml += '</tr>';
     thead.innerHTML = theadHtml;
@@ -636,7 +677,7 @@ function renderTableCoord() {
         if (isVazia) return;
 
         tbodyHtml += `<tr style="border-bottom: 1px solid var(--border-color); transition: background-color 0.2s;">`;
-        cols.forEach(col => {
+        visibleCols.forEach(col => {
             const val = row[col] || '-';
             if (col === cols[0]) {
                 tbodyHtml += `<td style="padding: 12px; font-weight: 500; color: var(--color-base);">${val}</td>`;
@@ -2426,15 +2467,49 @@ function renderTableMediasPorCargo(df, nomeCargo, stateKey, theadId, tbodyId) {
 
     const perfisArray = Array.from(perfisSet).sort();
 
+    // Filtering for visibility
+    if (!STATE.medias.hiddenProfiles) STATE.medias.hiddenProfiles = {};
+    const hiddenForCargo = STATE.medias.hiddenProfiles[stateKey] || [];
+    const visiblePerfis = perfisArray.filter(p => !hiddenForCargo.includes(p));
+
+    // Update UI for hidden profiles
+    const chartCard = tableHead.closest('.chart-card');
+    let hiddenContainer = chartCard.querySelector('.hidden-profiles-container');
+    if (!hiddenContainer) {
+        hiddenContainer = document.createElement('div');
+        hiddenContainer.className = 'hidden-profiles-container';
+        hiddenContainer.style.padding = '0 20px 10px 20px';
+        hiddenContainer.style.display = 'flex';
+        hiddenContainer.style.gap = '10px';
+        hiddenContainer.style.flexWrap = 'wrap';
+        
+        const header = chartCard.querySelector('.card-header');
+        header.parentNode.insertBefore(hiddenContainer, header.nextSibling);
+    }
+    
+    if (hiddenForCargo.length > 0) {
+        hiddenContainer.innerHTML = `<span style="font-size: 0.85rem; color: var(--color-text-main); align-self: center;">Perfis ocultos:</span>` +
+            hiddenForCargo.map(p => 
+                `<span style="background: var(--color-montanha); padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; cursor: pointer; color: var(--color-violet-dark); font-weight: 500; display: inline-flex; align-items: center; gap: 5px;" onclick="window.togglePerfilMedias('${stateKey}', '${p}')" title="Mostrar perfil">${p} <i class="ri-eye-line"></i></span>`
+            ).join('');
+    } else {
+        hiddenContainer.innerHTML = '';
+    }
+
     let theadHtml1 = `<tr><th rowspan="2" class="sortable" data-cargo="${stateKey}" data-col="tag" style="padding: 12px; border-bottom: 2px solid var(--border-color); color: var(--color-base); cursor: pointer; vertical-align: bottom;">Tag <i class="ri-arrow-up-down-line" style="font-size: 0.8rem; color: var(--color-text-main);"></i></th>`;
-    perfisArray.forEach(p => {
-        theadHtml1 += `<th colspan="4" style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: center; color: var(--color-base); border-left: 2px solid var(--border-color);">${p}</th>`;
+    visiblePerfis.forEach(p => {
+        theadHtml1 += `<th colspan="4" style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: center; color: var(--color-base); border-left: 2px solid var(--border-color);">
+            <div style="display:flex; justify-content:center; align-items:center; gap:6px;">
+                ${p}
+                <i class="ri-eye-off-line" style="cursor: pointer; font-size: 1rem; color: var(--color-text-main);" onmouseover="this.style.color='var(--color-laranja-solar)'" onmouseout="this.style.color='var(--color-text-main)'" onclick="window.togglePerfilMedias('${stateKey}', '${p}')" title="Ocultar perfil"></i>
+            </div>
+        </th>`;
     });
     theadHtml1 += `<th rowspan="2" style="padding: 12px; border-bottom: 2px solid var(--border-color); text-align: center; color: var(--color-base); border-left: 2px solid var(--border-color); vertical-align: bottom; background: rgba(0,0,0,0.02);">Média Cargo</th>`;
     theadHtml1 += `</tr>`;
 
     let theadHtml2 = `<tr style="border-bottom: 2px solid var(--border-color);">`;
-    perfisArray.forEach(p => {
+    visiblePerfis.forEach(p => {
         theadHtml2 += `
             <th class="sortable" data-cargo="${stateKey}" data-col="horas-${p}" style="padding: 12px; color: var(--color-base); border-left: 2px solid var(--border-color); cursor: pointer; white-space: nowrap; font-weight: 500;">Horas <i class="ri-arrow-up-down-line" style="font-size: 0.8rem; color: var(--color-text-main);"></i></th>
             <th class="sortable" data-cargo="${stateKey}" data-col="qtd-${p}" style="padding: 12px; color: var(--color-base); cursor: pointer; white-space: nowrap; font-weight: 500;">Qtd Itens <i class="ri-arrow-up-down-line" style="font-size: 0.8rem; color: var(--color-text-main);"></i></th>
@@ -2504,7 +2579,7 @@ function renderTableMediasPorCargo(df, nomeCargo, stateKey, theadId, tbodyId) {
     tableBody.innerHTML = '';
     
     if (tagsList.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="${perfisArray.length * 4 + 2}" style="padding:15px; text-align:center;">Sem dados para este cargo.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="${visiblePerfis.length * 4 + 2}" style="padding:15px; text-align:center;">Sem dados para este cargo.</td></tr>`;
         return;
     }
 
@@ -2520,7 +2595,7 @@ function renderTableMediasPorCargo(df, nomeCargo, stateKey, theadId, tbodyId) {
 
         let trHtml = `<tr style="border-bottom: 1px solid var(--border-color);"><td style="padding: 12px; color: var(--color-base); font-weight: 500;">${t}</td>`;
         
-        perfisArray.forEach(p => {
+        visiblePerfis.forEach(p => {
             const metrics = getMetrics(dadosPorTag[t], p);
             
             let iconHtml = '';
@@ -2551,5 +2626,36 @@ function renderTableMediasPorCargo(df, nomeCargo, stateKey, theadId, tbodyId) {
         tableBody.insertAdjacentHTML('beforeend', trHtml);
     });
 }
+
+// Global function to toggle profile visibility in "Médias" tab
+window.togglePerfilMedias = function(cargoKey, perfilName) {
+    if (!STATE.medias.hiddenProfiles) {
+        STATE.medias.hiddenProfiles = {};
+    }
+    if (!STATE.medias.hiddenProfiles[cargoKey]) {
+        STATE.medias.hiddenProfiles[cargoKey] = [];
+    }
+    const idx = STATE.medias.hiddenProfiles[cargoKey].indexOf(perfilName);
+    if (idx > -1) {
+        STATE.medias.hiddenProfiles[cargoKey].splice(idx, 1);
+    } else {
+        STATE.medias.hiddenProfiles[cargoKey].push(perfilName);
+    }
+    renderPageMedias(STATE.filteredData);
+};
+
+// Global function to toggle coord equipes visibility
+window.toggleEquipeCoord = function(equipeName) {
+    if (!STATE.coord) STATE.coord = { tableSortColumn: null, tableSortDir: 'desc', hiddenEquipes: [] };
+    if (!STATE.coord.hiddenEquipes) STATE.coord.hiddenEquipes = [];
+    
+    const idx = STATE.coord.hiddenEquipes.indexOf(equipeName);
+    if (idx > -1) {
+        STATE.coord.hiddenEquipes.splice(idx, 1);
+    } else {
+        STATE.coord.hiddenEquipes.push(equipeName);
+    }
+    renderTableCoord();
+};
 
 
