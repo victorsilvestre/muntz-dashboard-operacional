@@ -208,7 +208,7 @@ async function initDashboard() {
         initTheme(); // Executa rotina de visual logo no início
 
         // We assume index.html is in web_app/ and csv is in data/
-        const targetCsvUrl = 'data/relatorio_completo_010126-a-150326.csv?v=' + new Date().getTime();
+        const targetCsvUrl = 'data/relatorio_completo_010126-a-310326.csv?v=' + new Date().getTime();
         const coordCsvUrl = 'data/Coordenação _ Tempo Ideal por Tag.csv?v=' + new Date().getTime();
 
         Papa.parse(coordCsvUrl, {
@@ -223,7 +223,7 @@ async function initDashboard() {
                     download: true,
                     header: true,
                     skipEmptyLines: true,
-                    delimiter: ';',
+                    delimiter: ',',
                     complete: function (results) {
                         processData(results.data);
                     },

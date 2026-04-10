@@ -4,7 +4,7 @@ import json
 multiplas = []
 seen = set()
 
-with open('data/relatorio_completo_010126-a-150326.csv', encoding='utf-8') as f:
+with open('data/relatorio_completo_010126-a-310326.csv', encoding='utf-8') as f:
     reader = csv.DictReader(f, delimiter=';')
     for row in reader:
         tags_str = row.get('Tags', '')
